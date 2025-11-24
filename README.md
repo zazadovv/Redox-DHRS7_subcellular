@@ -107,6 +107,9 @@ The file has to be first opened in VS code or Pycharm with Proper Pytho Interpre
 
 <img width="3433" height="1360" alt="Screenshot 2025-11-23 235432" src="https://github.com/user-attachments/assets/c7213536-5917-4ea0-b3c9-c08cc60dac92" />
 
+<img width="3438" height="1384" alt="Screenshot 2025-11-23 234637" src="https://github.com/user-attachments/assets/36452c19-237a-4d43-b1d5-022ff482ac99" />
+
+
 
 
 <img width="2660" height="1278" alt="A549-D7-MITO-6_SIM²_MAX_Aligned_intensity_scatter_ColocZ" src="https://github.com/user-attachments/assets/123ebc8e-b7b2-42dc-978b-0aebc4d6e44b" />

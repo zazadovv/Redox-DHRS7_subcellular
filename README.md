@@ -80,3 +80,37 @@ ________________________________________________________________________________
 
 
 📋 Usage Guidelines
+
+Download the Demo folder that contains .tiff files. The .tiff files are categorized based on figure label. 
+Place the downloaded files in an easy accessible folder. 
+
+Set Up the Environment
+
+Install the required packages as described above (YAML or pip).
+
+Use the recommended Python environment (e.g., Microscopy_Analysis_Advanced2).
+
+Run Co-Localization Script.
+
+Download Co_localization_analysis_script.py (main executable).
+
+Open the file in VS Code or PyCharm.
+
+ensure the interpreter is set to the proper Python 3.9 Environment.
+
+Run the script to generate .html output.
+
+The file has to be first opened in VS code or Pycharm with Proper Pytho Interpreter ( Python, 3.9.2).
+
+<img width="3158" height="1906" alt="Screenshot 2025-11-23 234413" src="https://github.com/user-attachments/assets/90481af9-5a28-438f-9268-aa6604bf2038" />
+
+
+<img width="3433" height="1360" alt="Screenshot 2025-11-23 235432" src="https://github.com/user-attachments/assets/c7213536-5917-4ea0-b3c9-c08cc60dac92" />
+
+
+
+<img width="2660" height="1278" alt="A549-D7-MITO-6_SIM²_MAX_Aligned_intensity_scatter_ColocZ" src="https://github.com/user-attachments/assets/123ebc8e-b7b2-42dc-978b-0aebc4d6e44b" />
+
+<img width="2773" height="1278" alt="A549-D7-NUCLEAR-29_SIM²_MAX_Aligned_intensity_scatter_ColocZ" src="https://github.com/user-attachments/assets/3dfc3925-ce0b-4543-99c9-4de565a7b098" />
+
+<img width="2670" height="1278" alt="A549-HD7-ER-meth29_SIM²_MAX_Aligned_intensity_scatter_ColocZ" src="https://github.com/user-attachments/assets/efc6d681-136d-4098-af3e-fd1ed0e60fc2" />

@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+oryzias latipes (ENSORLG0000001…  MDSYLVYILWY-ILPLYLLIHLLCFIFADADFTLLRASLMGHRPESKLKGLVVWVTGASSGIGEELAYQLAKCGSRLILS
+Human-ref                         *:  *:  *      * **: ** *: ** * *** *   * *** :*  :*******************:* *  *:**
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+oryzias latipes (ENSORLG0000001…  ARRKDELNKVKQHCLETSNLKDEDILVLPLDLLERTSHEEKTKAVIQHFGQIDILINNGGRSQRSLCLETSVDVYQALME
+Human-ref                         ***  ** :**: ***  ***::********* :  ***  ****:* **:****:**** ******::**:***: *:*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+oryzias latipes (ENSORLG0000001…  LNFLGTVSLTKQVLPHMTQRGRGSIVTVSSVVGLAGAPLATGYSASKHALQGFFNSLRTELTDFPKILISTACPGPVQSQ
+Human-ref                         **:******** ***** :* :* ****:*::*:   **: ** ******:**** *****  :* *::*  ******* 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+oryzias latipes (ENSORLG0000001…  IVNNAFTEELNKPVTTVGYQGHKMPTSRCVHLMLVGISNGVKEMWIAQQPFLVFYYLWQYAPSFAWSVTDLLGRKRVQNF
+Human-ref                         ** *:   *: * :   * * *** ***** ***: ::* :**:**::****:  ***** *::** :*: :*:**::**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+oryzias latipes (ENSORLG0000001…  KAGVDADSAYFR--KPKTS
+Human-ref                         *:******:**:  * *  
+

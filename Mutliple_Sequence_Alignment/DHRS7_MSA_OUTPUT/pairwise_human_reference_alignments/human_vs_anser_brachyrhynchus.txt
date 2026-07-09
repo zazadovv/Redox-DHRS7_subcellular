@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+anser brachyrhynchus (ENSABRG00…  MSWGCLCLLAG-GALLALLVQLVRWLRADGDLTLLWAEWRGKKPENELRGKVVWVTGASSGIGEELAYQLSKIGALLAIS
+Human-ref                         *:*  *  *    *** *****:*:**************:*::** **   *********************:*  * :*
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+anser brachyrhynchus (ENSABRG00…  ARREDELERVKKKCLQISNLTEKDILVLRLDLTDRSSHEAATNSVIKHFGKIDVLVNNGGRSQRSLFMDTNLDVYSAIME
+Human-ref                         ***  ******::**:  ** ******* *****  ****** :*:: **:**:****** ***** ***:****  ::*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+anser brachyrhynchus (ENSABRG00…  LNYLGTISLTKHVLKHMIERKKGKIVTVSSVMGIMGAPLASGYCASKHALQGFFNSLRTELTDYPEISIINICPGPVQSK
+Human-ref                         ******:**** ** ******:******:*::**:  **: *********:**** *****  ** * : ********* 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+anser brachyrhynchus (ENSABRG00…  IIQNVFTENLSKSLENSGDQSHKMPTDRCVRLTLVSTANNLKEAWISDHPYLAICYLWQYAPTWAWWLMNRMGKRRIQNF
+Human-ref                         *::*     ::*:: *:******* * ***** *:* **:*** ***: *:* : ***** ******: *:***:**:**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+anser brachyrhynchus (ENSABRG00…  KSGVDADASYLR----KLK
+Human-ref                         *******:** :    *  
+

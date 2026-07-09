@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+taeniopygia guttata (ENSTGUG000…  MAWGCLLALAG-GALLALLVQLLRWLRADGDLTLLWAERWGKKPEHELRGKVVWVTGASSGIGEELAYQLAKLGALLAIS
+Human-ref                         * *  ** *    *** *******:*************  *::** **   *******************:***  * :*
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+taeniopygia guttata (ENSTGUG000…  ARREDELQRVKKKCLQISSLSESDILVLRLDLTDRSSHEAATNSVLKHFGKIDVLVNNGGRSQRSLFVDTNLDVYNAIIE
+Human-ref                         ***  **:***::**:  :* * ***** *****  ****** :**: **:**:****** ***** :**:****  :**
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+taeniopygia guttata (ENSTGUG000…  LNYLGTISLTKYVLNHMIQRKKGKIVTVSSVMGIMGAPLATGYCASKHALQGFFNSLRTELTDYPEISIIQICPGPVQSQ
+Human-ref                         ******:**** ** ***:**:******:*::**:  **: *********:**** *****  ** * :  ******** 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+taeniopygia guttata (ENSTGUG000…  IIQNVFTENLAKSIENSGDQSHKMPTDRCARLTLVSVANDVKEAWISDHPYLAVCYLWQYAPTWAWWLMNRMGKKRIQNF
+Human-ref                         *::*     : *:* *:******* * ** ** *:*:***:** ***: *:* * ***** ******: *:******:**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+taeniopygia guttata (ENSTGUG000…  KSGIVSVQRVCT--APQPH
+Human-ref                         ***: :          :  
+

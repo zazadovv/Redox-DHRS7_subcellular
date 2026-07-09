@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+ictalurus punctatus (ENSIPUG000…  MEVCVCSVLLL-CVCVYVTLQLIRFITADADFTLLWAAAVGRSPEVALSQKVVWITGASSGIGEELAYQLAAVGARLVLS
+Human-ref                         *   :   **: *  : : :**:**: ** * *****   ** **  *:  ***:***************: :*  ****
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+ictalurus punctatus (ENSIPUG000…  ARRENELHRVRRNCLERSSLEEKDILVLPLDLLDRSTHGEKTESVLQHFSKIDVLVNNGGRSQRSLCVDTDIDVYGSLME
+Human-ref                         *** :** **:* ***  :*:*********** *  :*   *::*** * :**:****** ******:** :***  *:*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+ictalurus punctatus (ENSIPUG000…  LNYLGTVSVTQHVLRHMIQRGDGIIATVSSIVGLVGVPLSTGYAASKHALQGFFNSLRTELTDYPNITISTICPGPVVSQ
+Human-ref                         ********:*: ** ***:*  * * **:**:*:: **** ** ******:**** *****  ** * :* ****** * 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+ictalurus punctatus (ENSIPUG000…  VVHNAFTEQVGKPVSDAGDQSHKMSTERCVHLIVAGLSNRVKELWIGQQPFLLFFYLWQYTPTFAWYITNLLGRKRVQNF
+Human-ref                         :* *:   :* * : : *******:* *** *::  ::* :**:** :*****  ***** **:**:*** :*:**::**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+ictalurus punctatus (ENSIPUG000…  KAGLDADTAYFT--KAKTS
+Human-ref                         *:*:***::**   * *  
+

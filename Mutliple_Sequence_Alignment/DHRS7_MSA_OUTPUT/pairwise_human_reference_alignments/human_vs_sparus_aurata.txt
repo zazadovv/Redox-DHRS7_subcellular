@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+sparus aurata (ENSSAUG000100157…  MDCCIVSALWC-FTPLYFLIHLLCFIFADADFTLLWGSLLGHKPENKLKGLVAWVTGASSGIGEELACQLAKCGSRLILS
+Human-ref                         *:  ::  *      *  *: ** *: ** * ****    * :** :*  :* ************** **:* *  *:**
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+sparus aurata (ENSSAUG000100157…  ARREAELKRVKQRCLECSDLQDKDILVLPLDLLERTSHEEKTKAVIQYFGRIDILINNGGRSQRSLCVETSVDVYQALME
+Human-ref                         ***  **:***:****  :*::********** :  ***  ****:* *******:**** ******::**:***: *:*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+sparus aurata (ENSSAUG000100157…  LNFLGTVSITKQVLPYMTQQGTGSIVTVSSVVGLAGAPLATGYSASKHALQGFFNSLRTELTDFPNILISTVCPGPVQSQ
+Human-ref                         **:*****:** ***:* ::  * ****:*::*:   **: ** ******:**** *****  :* *::* :******* 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+sparus aurata (ENSSAUG000100157…  IVQNAFTEEVNKPVAIAGNQEYKMPTSRCVHLMLVGIANGVKEMWIAQQPFLLFYYVWQYAPTFAWFITNKLGRKRVQNF
+Human-ref                         **:*:   ** * :   *:* :** ***** ***: :** :**:**::*****  *:*** **:**:****:*:**::**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+sparus aurata (ENSSAUG000100157…  KAGLDADSAYFT--KPKTS
+Human-ref                         *:*:****:**   * *  
+

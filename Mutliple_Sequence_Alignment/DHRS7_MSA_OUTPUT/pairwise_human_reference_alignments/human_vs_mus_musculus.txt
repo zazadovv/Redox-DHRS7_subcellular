@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+mus musculus (ENSMUSG0000002109…  MSWELLLWLLALCALILPLVQLLRFLRADADLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAFQLSKLGVSLVLS
+Human-ref                         *:******** ****:* *********** *************************************:************
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+mus musculus (ENSMUSG0000002109…  ARRAQELERVKRRCLENGNLKEKDILVLPLDLTDTSSHEAATKAVLQEFGKIDILVNNGGRSQRSLVLETNLDVFKELIN
+Human-ref                         ***  ****************************** **************:********* ***** ::*:***:::** 
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+mus musculus (ENSMUSG0000002109…  LNYIGTVSLTKCVLPHMIERKQGKIVTVNSIAGIASVSLSSGYCASKHALRGFFNALHSELGQYPGITFCNVYPGPVQSD
+Human-ref                         ***:*************************** ** ** ** ************** * :**  ****   *: ******:
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+mus musculus (ENSMUSG0000002109…  IVKNAFTEEVTKSMRNNIDQSYKMPTSRCVRLMLISMANDLKEVWISDHPVLLGAYIWQYMPTWAAWLNCKLGKERIQNF
+Human-ref                         **:*:   ****:: ** ***:** **********************: * **  *:******** *:  *:**:**:**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+mus musculus (ENSMUSG0000002109…  KNNLDPDLPY-KFLKAKKD
+Human-ref                         *: :* *  * *  * * *
+

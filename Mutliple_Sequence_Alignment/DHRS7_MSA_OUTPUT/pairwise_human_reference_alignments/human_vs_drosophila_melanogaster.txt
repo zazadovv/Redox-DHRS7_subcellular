@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+drosophila melanogaster (FBgn00…  MSFLE--FLLL-LLVLYYVVYVLLWILLDCNVALWYKSRFGV-SLSSMRGQVVWITGASSGIGRALALSLARHGVKLVLS
+Human-ref                         *::    :**:   :*  :* :* ::  * :: * :    *      :   ***:********  **  *:: ** ****
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+drosophila melanogaster (FBgn00…  ARRLEQLEQVQEECLAAGLLATKDVLVIQMDMLDLDEHKTHLNTVLNHFHRLDVLVNNAGRSQRASWTEVEIEVDRELFE
+Human-ref                         ***: :**:*:  **  * *  **:**: :*: *   *:     **  * *:*:**** * ***:   :  ::* *:* *
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+drosophila melanogaster (FBgn00…  LDVFAVVHLSRLVVRYFVEQNRGHIAATSSIAGFSPVPFSPTYCAAKHALNAYLLSLKVEMRK---LDVSLFAPGPIATD
+Human-ref                         *:    * *:: *: : :*: :* *   :** *   ** *  ***:****  :   *: *:     : **   ***: ::
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+drosophila melanogaster (FBgn00…  FLQEAFTGSQGGKVGLSTANQKRMTAQRCGDLFAVALANKMDLTWCGLFPVNLLAYCAR-NPTLSKILAQLMTEKTLNKI
+Human-ref                          :: :  *     :* :     :**  **  *  :::** :   *    *  *: *  :  ** :  :   * :* :   
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+drosophila melanogaster (FBgn00…  REGK--------------L
+Human-ref                         : *                
+

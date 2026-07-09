@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+anolis carolinensis (ENSACAG000…  GPWPL-LWSIS--RVFLEYLEIPRLL--ERDLLRLK----ESSFSLVLPGKVVWVTGASSGIGEELSYQLAKIGSPLALS
+Human-ref                           * * ** :    : *  ::: * *  : **  *            *   ***************:***:*:*  * **
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+anolis carolinensis (ENSACAG000…  ARRENELERVKKKCLEISSLSDKDILIVPLDLTNRSTHESATQSVLKHFGKIDILVNNGGRSQRSLFVDTSIDVYNAIME
+Human-ref                         *** :******::***  :* :****::*****:  :**:**::**: **:********* ***** :***:***  ::*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+anolis carolinensis (ENSACAG000…  LNYLGTISLTKHVLDHMIQRKKGKIVTMNSVMGIMGAPLATGYCASKHALQGFFNSLRPEVAEYPEISIINLCPGPVQSQ
+Human-ref                         ******:**** ** ***:**:*****:**::**:  **: *********:**** ** *:* ** * : *:******* 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+anolis carolinensis (ENSACAG000…  IIQNVFTEEVSKVNANIGDQSHKMPTDRCVRLGLVSMANDIKEAWISDNPYLAVCYLWQYAPTWAWWLLNRIGKTRIKNF
+Human-ref                         *::*    **:*   * ******* * ***** *:*****:** ***: *:* * ***** ******: *::** **:**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+anolis carolinensis (ENSACAG000…  KSGVDADVSYYK----KSS
+Human-ref                         ******* **:*    *  
+

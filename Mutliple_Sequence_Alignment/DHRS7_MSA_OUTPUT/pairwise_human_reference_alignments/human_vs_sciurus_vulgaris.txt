@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+sciurus vulgaris (ENSSVLG000050…  MSWELLLWLLALCALFLLLVQLLRFLRADGDLSLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELVYQLSKLGVSLVLS
+Human-ref                         *:******** **** ****************:********************************* *************
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+sciurus vulgaris (ENSSVLG000050…  ARRVHELERVKRKCLENGNLKGKDILILPLDLTDRSSHEAATKAVLQEFGRIDILVNNGGRSQRSLIVDTNLDVFKELIE
+Human-ref                         ************:******** ****:*******  ************************ ***** :**:***:::***
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+sciurus vulgaris (ENSSVLG000050…  LNYLGTVSLTKCVLPHMIERKQGKIVIVNSIAGLVSVPLSSGYCASKYALRGFFNCLRSELNKYPGIIISNICPGPVQSN
+Human-ref                         ************************** **** *::***** ******:******* **:**  *****:***********
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+sciurus vulgaris (ENSSVLG000050…  IIKNALAEEVTKTVANVGDQSHKMATSRCVRLMLIAMANDLKEVWIAEQPFLLVTYLWQYMPTLATWITNKLGMKRISNF
+Human-ref                         *::*:** *****: * ******* **********:**********:**************** * *****:* *** **
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+sciurus vulgaris (ENSSVLG000050…  QSGMDADSSYFKIWKTKHE
+Human-ref                         :**:*********:****:
+

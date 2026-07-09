@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+vulpes vulpes (ENSVVUG000000294…  MSWELLLWLLALSALLALLVQLLRFVRADGDLTLLWAEWQGRRPEWELTDMVIWVTGASSGIGEELVYQLSKLGVSLVLS
+Human-ref                         *:******** * *** ********:**************************:************* *************
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+vulpes vulpes (ENSVVUG000000294…  ARRVQELERVKRRCLENGILKEKDIFVLPLDLTDRSSHEAATKAVLQEFGKIDILVNNGGQSQRSLCVDTNLDVFKELME
+Human-ref                         **** ************* ****** ********  **************:********* ******:**:***:::*:*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+vulpes vulpes (ENSVVUG000000294…  LNYLGTVSLTMCVLPHMIERKQGKIVTVNSLLGIISAPLSSGYCASKHALRGFFNCLRVELAEYPGILISNICPGPVQSN
+Human-ref                         ********** *******************:***** *** ************** ** *** ****::***********
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+vulpes vulpes (ENSVVUG000000294…  IVKNSLTEEVTKSVGIDTVQSHKMATSRCVRLMLISMANDLKEVWIADHPFLLVVYLWQYMPTWAWWLTNILGKKRIENF
+Human-ref                         **:***  ****::* :  ***** *********************:: ***** ************:** :********
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+vulpes vulpes (ENSVVUG000000294…  KNGLDADISYFKTWKTKHD
+Human-ref                         *:*:*** **** :*****
+

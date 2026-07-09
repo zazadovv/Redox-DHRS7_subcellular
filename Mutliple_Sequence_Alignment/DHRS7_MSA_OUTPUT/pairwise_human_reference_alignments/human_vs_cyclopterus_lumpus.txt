@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+cyclopterus lumpus (ENSCLMG0000…  MECCIASVLWC-FVPLYLLINFLCFIFADADLTLLWAGLFGHRPENKLKGLVVWVTGASSGIGEELAHQLARCGSRLILS
+Human-ref                         *   :   *      * **:  * *: ** *******   * *** :*  :****************:**:: *  *:**
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+cyclopterus lumpus (ENSCLMG0000…  ARREEELKRVKRSCLECSDLQDEDIRVLPLDLLERTSHEEKAKAAIQYFGHIDVLINNGGRSQRSLCLETSIDVYQALME
+Human-ref                         ***  **:**** ***  :*:::** ****** :  ***   ** :* ** **:*:**** ******::**:***: *:*
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+cyclopterus lumpus (ENSCLMG0000…  LNFLGTVSITKQVLPHMTQQGRGSIVTVSSVVGLAGAPLATGYSASKHALQGFFNSLRTELTDFPNILISTVCPGPVQSQ
+Human-ref                         **:*****:** ***** :: :* ****:*::*:   **: ** ******:**** *****  :* *::* :******* 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+cyclopterus lumpus (ENSCLMG0000…  IVQNAFTEEVLKPMAAAGNQGHKMATSRCVRLMLVGIANGVKEMWIAQQPFLLFYYTWQYAPTFAWFVTNVLGRKRVQNF
+Human-ref                         **:*:   ** * :   *:* *** *********: :** :**:**::*****  * *** **:**::** :*:**::**
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+cyclopterus lumpus (ENSCLMG0000…  KAGLDADTAYFT--KPKSS
+Human-ref                         *:*:***::**   * *  
+

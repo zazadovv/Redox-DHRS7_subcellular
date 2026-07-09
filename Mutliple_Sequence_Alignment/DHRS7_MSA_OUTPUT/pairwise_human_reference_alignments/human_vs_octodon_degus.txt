@@ -1,0 +1,25 @@
+                                    1         11        21        31        41        51        61        71
+homo sapiens (DHRS7)              MNWELLLWLLVLCALLLLLVQLLRFLRADGDLTLLWAEWQGRRPEWELTDMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+octodon degus (ENSODEG000000145…  MGCLLLLLLPA-LGALLLLLGLGLFLRADCDLTLKWAEWRGRRPEEELPGMVVWVTGASSGIGEELAYQLSKLGVSLVLS
+Human-ref                         *   *** *      ****: *  ***** **** ****:***** **  ******************************
+
+                                    81        91        101       111       121       131       141       151
+homo sapiens (DHRS7)              ARRVHELERVKRRCLENGNLKEKDILVLPLDLTDTGSHEAATKAVLQEFGRIDILVNNGGMSQRSLCMDTSLDVYRKLIE
+octodon degus (ENSODEG000000145…  ARRENELERVKRRCLENGKVKEKDVLILPLDLTDRSSHEVATKAVLQEFGRIDILVNNGGRSQRSLLMDTNMDVFKELIE
+Human-ref                         *** :************* :****:*:*******  *** ******************** ***** ***::**:::***
+
+                                    161       171       181       191       201       211       221       231
+homo sapiens (DHRS7)              LNYLGTVSLTKCVLPHMIERKQGKIVTVNSILGIISVPLSIGYCASKHALRGFFNGLRTELATYPGIIVSNICPGPVQSN
+octodon degus (ENSODEG000000145…  LNYLGTVSLTKCVLPHLVERKRGKIVTVNSFAGVVSVPLSSGYCASKHALRGFFNCLRTELVEYPDIVVSNVCPGPVQSQ
+Human-ref                         ****************::***:********  *::***** ************** *****  ** *:***:******* 
+
+                                    241       251       261       271       281       291       301       311
+homo sapiens (DHRS7)              IVENSLAGEVTKTIGNNGDQSHKMTTSRCVRLMLISMANDLKEVWISEQPFLLVTYLWQYMPTWAWWITNKMGKKRIENF
+octodon degus (ENSODEG000000145…  IVHNAFGEEVTKAVGNGGDQSYKMATSRCVQLMLVTMANDLKEVWIGDQPFLLVAYLWQYMPTWAWWITNKFGKKRIESF
+Human-ref                         ** *:   **** :** ****:** *****:***::********** :****** **************** ******:*
+
+                                    321       331
+homo sapiens (DHRS7)              KSGVDADSSYFKIFKTKHD
+octodon degus (ENSODEG000000145…  KSGMDADASYFKSLKKKHD
+Human-ref                         ***:***:****  * ***
+

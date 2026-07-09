@@ -1,0 +1,289 @@
+Gene: DHRS7
+Source species: homo_sapiens
+Sequences recovered: 253 / 253
+Alignment method: muscle
+Phylogeny built: no
+Full alignment length: 835
+Reference-projected alignment length: 339
+Selection mode: all_filtered
+Annotated-site comparison window: +/-3 residues
+Protein metadata enrichment mode: auto
+Tree nomenclature source: auto
+AlphaFold bundle mode: auto
+
+Recovered species:
+  - homo_sapiens (DHRS7) len=339
+  - pan_paniscus (ENSPPAG00000025681) len=339
+  - pongo_abelii (ENSPPYG00000005870) len=339
+  - pan_troglodytes (ENSPTRG00000006406) len=339
+  - nomascus_leucogenys (ENSNLEG00000013686) len=339
+  - gorilla_gorilla (ENSGGOG00000008367) len=365
+  - sarcophilus_harrisii (ENSSHAG00000013927) len=466
+  - notamacropus_eugenii (ENSMEUG00000001704) len=321
+  - choloepus_hoffmanni (ENSCHOG00000007153) len=321
+  - dasypus_novemcinctus (ENSDNOG00000039298) len=339
+  - erinaceus_europaeus (ENSEEUG00000001552) len=367
+  - echinops_telfairi (ENSETEG00000015589) len=276
+  - echinops_telfairi (ENSETEG00000019613) len=362
+  - echinops_telfairi (ENSETEG00000018098) len=276
+  - callithrix_jacchus (ENSCJAG00000019070) len=339
+  - cercocebus_atys (ENSCATG00000029538) len=339
+  - macaca_fascicularis (ENSMFAG00000031332) len=339
+  - macaca_nemestrina (ENSMNEG00000033351) len=339
+  - macaca_mulatta (ENSMMUG00000002540) len=339
+  - papio_anubis (ENSPANG00000021242) len=404
+  - mandrillus_leucophaeus (ENSMLEG00000030456) len=371
+  - ailuropoda_melanoleuca (ENSAMEG00000002913) len=474
+  - panthera_leo (ENSPLOG00000005526) len=339
+  - ursus_americanus (ENSUAMG00000008972) len=339
+  - cricetulus_griseus_picr (ENSCGRG00015026990) len=331
+  - cricetulus_griseus_picr (ENSCGRG00015027006) len=420
+  - equus_asinus (ENSEASG00005016143) len=338
+  - balaenoptera_musculus (ENSBMSG00010007688) len=339
+  - sus_scrofa (ENSSSCG00000005083) len=339
+  - mustela_putorius_furo (ENSMPUG00000006299) len=339
+  - heterocephalus_glaber_female (ENSHGLG00000014306) len=337
+  - vicugna_pacos (ENSVPAG00000005239) len=368
+  - sorex_araneus (ENSSARG00000004554) len=372
+  - mesocricetus_auratus (ENSMAUG00000008532) len=312
+  - mesocricetus_auratus (ENSMAUG00000011707) len=228
+  - mus_spicilegus (ENSMSIG00000024915) len=338
+  - mus_spicilegus (ENSMSIG00000024922) len=335
+  - bos_taurus (ENSBTAG00000020729) len=339
+  - camelus_dromedarius (ENSCDRG00005005123) len=394
+  - vulpes_vulpes (ENSVVUG00000029494) len=339
+  - tursiops_truncatus (ENSTTRG00000005511) len=365
+  - physeter_catodon (ENSPCTG00005007007) len=339
+  - jaculus_jaculus (ENSJJAG00000018132) len=169
+  - jaculus_jaculus (ENSJJAG00000020161) len=338
+  - procavia_capensis (ENSPCAG00000006040) len=322
+  - equus_caballus (ENSECAG00000011422) len=338
+  - marmota_marmota_marmota (ENSMMMG00000006186) len=329
+  - marmota_marmota_marmota (ENSMMMG00000006169) len=339
+  - mus_spretus (ENSMSPG00010027852) len=362
+  - mus_spretus (ENSMSPG00010027766) len=335
+  - ochotona_princeps (ENSOPRG00000001797) len=374
+  - vombatus_ursinus (ENSVURG00010018100) len=339
+  - ictidomys_tridecemlineatus (ENSSTOG00000007361) len=420
+  - capra_hircus (ENSCHIG00000026336) len=339
+  - rattus_norvegicus (ENSRNOG00000067058) len=324
+  - rattus_norvegicus (ENSRNOG00000005589) len=338
+  - rattus_norvegicus (ENSRNOG00000025648) len=324
+  - urocitellus_parryii (ENSUPAG00010001895) len=420
+  - loxodonta_africana (ENSLAFG00000014209) len=336
+  - microtus_ochrogaster (ENSMOCG00000017844) len=337
+  - microtus_ochrogaster (ENSMOCG00000021237) len=324
+  - mus_musculus (ENSMUSG00000109482) len=335
+  - mus_musculus (ENSMUSG00000021094) len=338
+  - moschus_moschiferus (ENSMMSG00000009154) len=339
+  - tupaia_belangeri (ENSTBEG00000000909) len=319
+  - bos_grunniens (ENSBGRG00000007903) len=365
+  - rhinopithecus_roxellana (ENSRROG00000040748) len=339
+  - mus_caroli (MGP_CAROLIEiJ_G0017837) len=338
+  - neovison_vison (ENSNVIG00000006325) len=339
+  - chinchilla_lanigera (ENSCLAG00000003437) len=338
+  - chinchilla_lanigera (ENSCLAG00000004431) len=320
+  - cebus_imitator (ENSCCAG00000025684) len=339
+  - sciurus_vulgaris (ENSSVLG00005002208) len=339
+  - panthera_tigris_altaica (ENSPTIG00000006869) len=289
+  - panthera_pardus (ENSPPRG00000009265) len=339
+  - cervus_hanglu_yarkandensis (ENSCHYG00000008948) len=339
+  - phascolarctos_cinereus (ENSPCIG00000020432) len=339
+  - catagonus_wagneri (ENSCWAG00000004509) len=339
+  - nannospalax_galili (ENSNGAG00000014268) len=320
+  - nannospalax_galili (ENSNGAG00000019713) len=338
+  - ovis_aries (ENSOARG00020077777) len=369
+  - rhinolophus_ferrumequinum (ENSRFEG00010003763) len=339
+  - propithecus_coquereli (ENSPCOG00000027040) len=339
+  - octodon_degus (ENSODEG00000014507) len=338
+  - canis_lupus_familiaris (ENSCAFG00845022116) len=349
+  - delphinapterus_leucas (ENSDLEG00000006194) len=339
+  - cavia_porcellus (ENSCPOG00000001327) len=450
+  - cavia_porcellus (ENSCPOG00000005765) len=273
+  - rhinopithecus_bieti (ENSRBIG00000040523) len=366
+  - bos_indicus_hybrid (ENSBIXG00005009756) len=363
+  - pteropus_vampyrus (ENSPVAG00000002782) len=363
+  - carlito_syrichta (ENSTSYG00000026475) len=350
+  - carlito_syrichta (ENSTSYG00000014277) len=352
+  - felis_catus (ENSFCTG00005021349) len=383
+  - peromyscus_maniculatus_bairdii (ENSPEMG00000010519) len=206
+  - peromyscus_maniculatus_bairdii (ENSPEMG00000022404) len=339
+  - canis_lupus_dingo (ENSCAFG00020008153) len=396
+  - saimiri_boliviensis_boliviensis (ENSSBOG00000031180) len=339
+  - otolemur_garnettii (ENSOGAG00000006360) len=324
+  - myotis_lucifugus (ENSMLUG00000005858) len=339
+  - bison_bison_bison (ENSBBBG00000020509) len=289
+  - monodon_monoceros (ENSMMNG00015010681) len=339
+  - chlorocebus_sabaeus (ENSCSAG00000014204) len=339
+  - mus_pahari (MGP_PahariEiJ_G0029593) len=260
+  - mus_pahari (MGP_PahariEiJ_G0029594) len=302
+  - aotus_nancymaae (ENSANAG00000022608) len=376
+  - microcebus_murinus (ENSMICG00000012540) len=341
+  - oryctolagus_cuniculus (ENSOCUG00000002249) len=339
+  - phocoena_sinus (ENSPSNG00000010883) len=339
+  - monodelphis_domestica (ENSMODG00000008587) len=339
+  - prolemur_simus (ENSPSMG00000025761) len=354
+  - bos_mutus (ENSBMUG00000025204) len=339
+  - ursus_maritimus (ENSUMAG00000013783) len=289
+  - drosophila_melanogaster (FBgn0031360) len=321
+  - ciona_intestinalis (ENSCING00000018555) len=81
+  - ciona_intestinalis (ENSCING00000022239) len=250
+  - ciona_intestinalis (ENSCING00000003442) len=186
+  - ciona_intestinalis (ENSCING00000013250) len=255
+  - ciona_intestinalis (ENSCING00000011421) len=262
+  - ciona_intestinalis (ENSCING00000016484) len=259
+  - ciona_intestinalis (ENSCING00000012291) len=256
+  - ciona_intestinalis (ENSCING00000011919) len=254
+  - ciona_intestinalis (ENSCING00000013251) len=255
+  - ciona_intestinalis (ENSCING00000025099) len=259
+  - ciona_intestinalis (ENSCING00000010524) len=256
+  - ciona_intestinalis (ENSCING00000011357) len=253
+  - ciona_intestinalis (ENSCING00000008309) len=132
+  - ciona_intestinalis (ENSCING00000003440) len=294
+  - ciona_intestinalis (ENSCING00000005501) len=256
+  - ciona_intestinalis (ENSCING00000024255) len=255
+  - ciona_intestinalis (ENSCING00000013208) len=129
+  - caenorhabditis_elegans (WBGene00000981) len=293
+  - caenorhabditis_elegans (WBGene00000970) len=418
+  - caenorhabditis_elegans (WBGene00000975) len=255
+  - caenorhabditis_elegans (WBGene00011424) len=254
+  - caenorhabditis_elegans (WBGene00008986) len=249
+  - caenorhabditis_elegans (WBGene00008985) len=249
+  - caenorhabditis_elegans (WBGene00022809) len=249
+  - petromyzon_marinus (ENSPMAG00000009341) len=341
+  - eptatretus_burgeri (ENSEBUG00000010682) len=336
+  - callorhinchus_milii (ENSCMIG00000003708) len=238
+  - latimeria_chalumnae (ENSLACG00000018627) len=336
+  - lepisosteus_oculatus (ENSLOCG00000010060) len=341
+  - clupea_harengus (ENSCHAG00020009570) len=345
+  - danio_rerio (ENSDARG00000003444) len=338
+  - carassius_auratus (ENSCARG00000009480) len=339
+  - carassius_auratus (ENSCARG00000018673) len=379
+  - carassius_auratus (ENSCARG00000003638) len=328
+  - astyanax_mexicanus (ENSAMXG00000035013) len=339
+  - ictalurus_punctatus (ENSIPUG00015004583) len=338
+  - esox_lucius (ENSELUG00000011143) len=353
+  - electrophorus_electricus (ENSEEEG00000004824) len=335
+  - oncorhynchus_kisutch (ENSOKIG00005024393) len=336
+  - oncorhynchus_mykiss (ENSOMYG00000023490) len=336
+  - salmo_salar (ENSSSAG00000000357) len=296
+  - salmo_salar (ENSSSAG00000042631) len=339
+  - salmo_trutta (ENSSTUG00000047894) len=294
+  - salmo_trutta (ENSSTUG00000044393) len=338
+  - gadus_morhua (ENSGMOG00000010802) len=336
+  - fundulus_heteroclitus (ENSFHEG00000008182) len=336
+  - poecilia_reticulata (ENSPREG00000015404) len=348
+  - xiphophorus_maculatus (ENSXMAG00000013493) len=336
+  - cyclopterus_lumpus (ENSCLMG00005012910) len=336
+  - oryzias_latipes (ENSORLG00000015780) len=336
+  - haplochromis_burtoni (ENSHBUG00000022902) len=342
+  - haplochromis_burtoni (ENSHBUG00000022921) len=336
+  - oreochromis_niloticus (ENSONIG00000020122) len=342
+  - oreochromis_niloticus (ENSONIG00000020121) len=336
+  - astatotilapia_calliptera (ENSACLG00000020389) len=342
+  - astatotilapia_calliptera (ENSACLG00000020365) len=348
+  - sparus_aurata (ENSSAUG00010015752) len=336
+  - lates_calcarifer (ENSLCAG00010023780) len=336
+  - lates_calcarifer (ENSLCAG00010028149) len=313
+  - chrysemys_picta_bellii (ENSCPBG00000000599) len=335
+  - crocodylus_porosus (ENSCPRG00005018018) len=315
+  - sphenodon_punctatus (ENSSPUG00000009986) len=347
+  - xenopus_tropicalis (ENSXETG00000016955) len=336
+  - laticauda_laticaudata (ENSLLTG00000001630) len=278
+  - notechis_scutatus (ENSNSUG00000019110) len=332
+  - anas_platyrhynchos_platyrhynchos (ENSAPLG00000005318) len=355
+  - pseudonaja_textilis (ENSPTXG00000000395) len=334
+  - gallus_gallus (ENSGALG00010016937) len=387
+  - meleagris_gallopavo (ENSMGAG00000013578) len=334
+  - serinus_canaria (ENSSCAG00000005253) len=336
+  - parus_major (ENSPMJG00000002228) len=394
+  - cyprinodon_variegatus (ENSCVAG00000007514) len=336
+  - ciona_savignyi (ENSCSAVG00000007440) len=257
+  - ciona_savignyi (ENSCSAVG00000002769) len=257
+  - ciona_savignyi (ENSCSAVG00000003417) len=248
+  - naja_naja (ENSNNAG00000003464) len=334
+  - neolamprologus_brichardi (ENSNBRG00000009415) len=326
+  - neolamprologus_brichardi (ENSNBRG00000009342) len=345
+  - gasterosteus_aculeatus (ENSGACG00000008408) len=336
+  - nothobranchius_furzeri (ENSNFUG00015018749) len=336
+  - anser_brachyrhynchus (ENSABRG00000013664) len=339
+  - denticeps_clupeoides (ENSDCDG00010002242) len=363
+  - denticeps_clupeoides (ENSDCDG00010002434) len=344
+  - pygocentrus_nattereri (ENSPNAG00000033118) len=338
+  - geospiza_fortis (ENSGFOG00000000856) len=340
+  - erpetoichthys_calabaricus (ENSECRG00000016268) len=334
+  - amphiprion_ocellaris (ENSAOCG00000033897) len=336
+  - taeniopygia_guttata (ENSTGUG00000013000) len=360
+  - oryzias_sinensis (ENSOSIG00000007151) len=336
+  - anolis_carolinensis (ENSACAG00000015156) len=327
+  - xiphophorus_couchianus (ENSXCOG00000008566) len=336
+  - leptobrachium_leishanense (ENSLLEG00000013114) len=335
+  - stegastes_partitus (ENSSPAG00000012853) len=336
+  - scophthalmus_maximus (ENSSMAG00000001679) len=336
+  - pelodiscus_sinensis (ENSPSIG00000006028) len=332
+  - dicentrarchus_labrax (ENSDLAG00005015036) len=336
+  - coturnix_japonica (ENSCJPG00005005497) len=382
+  - cottoperca_gobio (ENSCGOG00000008692) len=336
+  - seriola_dumerili (ENSSDUG00000019842) len=323
+  - amphiprion_percula (ENSAPEG00000022850) len=336
+  - mastacembelus_armatus (ENSMAMG00000001868) len=336
+  - chelonoidis_abingdonii (ENSCABG00000000941) len=335
+  - oryzias_javanicus (ENSOJAG00000013909) len=341
+  - seriola_lalandi_dorsalis (ENSSLDG00000012373) len=336
+  - pundamilia_nyererei (ENSPNYG00000022151) len=336
+  - saccharomyces_cerevisiae (YIR035C) len=254
+  - saccharomyces_cerevisiae (YIR036C) len=263
+  - amphilophus_citrinellus (ENSACIG00000024234) len=337
+  - scleropages_formosus (ENSSFOG00015032508) len=335
+  - struthio_camelus_australis (ENSSCUG00000008220) len=348
+  - myripristis_murdjan (ENSMMDG00005023245) len=336
+  - maylandia_zebra (ENSMZEG00005007563) len=335
+  - maylandia_zebra (ENSMZEG00005007541) len=336
+  - cyprinus_carpio_carpio (ENSCCRG00000069499) len=339
+  - cyprinus_carpio_carpio (ENSCCRG00000077063) len=409
+  - paramormyrops_kingsleyae (ENSPKIG00000018017) len=378
+  - ficedula_albicollis (ENSFALG00000003458) len=365
+  - aquila_chrysaetos_chrysaetos (ENSACCG00020010064) len=336
+  - cynoglossus_semilaevis (ENSCSEG00000001501) len=336
+  - hippocampus_comes (ENSHCOG00000021010) len=334
+  - betta_splendens (ENSBSLG00000022950) len=337
+  - sander_lucioperca (ENSSLUG00000004361) len=324
+  - oncorhynchus_tshawytscha (ENSOTSG00005007629) len=397
+  - podarcis_muralis (ENSPMRG00000003294) len=336
+  - labrus_bergylta (ENSLBEG00000023004) len=329
+  - poecilia_formosa (ENSPFOG00000003816) len=336
+  - poecilia_latipinna (ENSPLAG00000004263) len=336
+  - kryptolebias_marmoratus (ENSKMAG00000005878) len=367
+  - oryzias_melastigma (ENSOMEG00000006492) len=336
+  - acanthochromis_polyacanthus (ENSAPOG00000015382) len=336
+  - tetraodon_nigroviridis (ENSTNIG00000017349) len=341
+  - anabas_testudineus (ENSATEG00000015683) len=336
+  - terrapene_carolina_triunguis (ENSTMTG00000019513) len=335
+  - larimichthys_crocea (ENSLCRG00005013466) len=365
+  - strigops_habroptila (ENSSHBG00005009699) len=336
+  - hucho_hucho (ENSHHUG00000049564) len=334
+  - takifugu_rubripes (ENSTRUG00000010385) len=391
+  - gopherus_evgoodei (ENSGEVG00005000446) len=335
+  - salvator_merianae (ENSSMRG00000012407) len=335
+
+Top conserved regions:
+  - charge_conservation: aln 272-279, ref 272-279, len=8, mean=0.999
+  - charge_conservation: aln 132-140, ref 132-140, len=9, mean=0.999
+  - charge_conservation: aln 185-210, ref 185-210, len=26, mean=0.998
+  - size_conservation: aln 132-140, ref 132-140, len=9, mean=0.998
+  - charge_conservation: aln 77-83, ref 77-83, len=7, mean=0.998
+  - aromaticity_conservation: aln 272-288, ref 272-288, len=17, mean=0.997
+  - charge_conservation: aln 52-71, ref 52-71, len=20, mean=0.996
+  - polarity_conservation: aln 205-215, ref 205-215, len=11, mean=0.996
+  - aromaticity_conservation: aln 47-84, ref 47-84, len=38, mean=0.995
+  - hydrophobicity_conservation: aln 158-171, ref 158-171, len=14, mean=0.995
+  - polarity_conservation: aln 125-140, ref 125-140, len=16, mean=0.995
+  - aromaticity_conservation: aln 94-127, ref 94-127, len=34, mean=0.994
+  - hydrophobicity_conservation: aln 129-140, ref 129-140, len=12, mean=0.994
+  - hydrophobicity_conservation: aln 205-215, ref 205-215, len=11, mean=0.994
+  - hydrophobicity_conservation: aln 52-70, ref 52-70, len=19, mean=0.994
+  - aromaticity_conservation: aln 132-146, ref 132-146, len=15, mean=0.994
+  - aromaticity_conservation: aln 148-171, ref 148-171, len=24, mean=0.994
+  - charge_conservation: aln 5-20, ref 5-20, len=16, mean=0.993
+  - charge_conservation: aln 158-171, ref 158-171, len=14, mean=0.992
+  - polarity_conservation: aln 164-174, ref 164-174, len=11, mean=0.992

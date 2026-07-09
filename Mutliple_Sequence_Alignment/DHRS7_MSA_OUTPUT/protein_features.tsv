@@ -1,0 +1,55 @@
+protein_record_id	species	symbol	uniprot_accession	source_database	feature_type	description	start	end	source_feature_id
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Signal		1	28	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Chain	Dehydrogenase/reductase SDR family member 7	29	339	PRO_0000031968
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Active site	Proton acceptor	203	203	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Binding site		60	60	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Binding site		62	62	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Binding site		190	190	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Binding site		203	203	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Binding site		207	207	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Binding site		239	239	
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Alternative sequence	in isoform 2	1	50	VSP_008103
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UniProt	Natural variant	in dbSNP:rs34583017	218	218	VAR_052319
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Chain	Benzil reductase ((S)-benzoin forming) NRE1	1	254	PRO_0000054870
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Active site	Proton donor	136	136	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Active site	Proton acceptor	150	150	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Active site	Lowers pKa of active site Tyr	154	154	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Binding site		7	7	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Binding site		85	85	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Binding site		150	150	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Binding site		154	154	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Binding site		181	181	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Binding site		183	183	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		4	7	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		13	25	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		30	36	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		38	48	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		49	51	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		52	57	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		62	76	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		81	85	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Turn		93	96	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		100	107	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		108	112	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		113	128	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		131	135	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		138	140	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		148	167	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		171	177	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		184	191	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Turn		195	197	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		200	210	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		219	231	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		235	237	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Beta strand		241	243	
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	UniProt	Helix		247	252	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Chain	Benzil reductase ((S)-benzoin forming) IRC24	1	263	PRO_0000054871
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Active site	Proton donor	143	143	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Active site	Proton acceptor	157	157	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Active site	Lowers pKa of active site Tyr	161	161	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Binding site		7	7	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Binding site		86	86	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Binding site		157	157	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Binding site		161	161	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Binding site		190	190	
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	UniProt	Binding site		192	192	

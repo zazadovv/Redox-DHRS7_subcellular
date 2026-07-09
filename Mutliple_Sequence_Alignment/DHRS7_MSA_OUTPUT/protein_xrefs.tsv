@@ -1,0 +1,191 @@
+protein_record_id	species	symbol	uniprot_accession	database	external_id	label	category
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	AF151844	ProteinId: AAD34081.1; Status: -; MoleculeType: mRNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	AF126782	ProteinId: AAF06941.1; Status: -; MoleculeType: mRNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	AY359031	ProteinId: AAQ89390.1; Status: -; MoleculeType: mRNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	AK313285	ProteinId: BAG36093.1; Status: -; MoleculeType: mRNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	AL163853	ProteinId: -; Status: NOT_ANNOTATED_CDS; MoleculeType: Genomic_DNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	CH471061	ProteinId: EAW80770.1; Status: -; MoleculeType: Genomic_DNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	BC000637	ProteinId: AAH00637.1; Status: -; MoleculeType: mRNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	EMBL	BC007337	ProteinId: AAH07337.1; Status: -; MoleculeType: mRNA	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	CCDS	CCDS81810.1	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	CCDS	CCDS9743.1	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	RefSeq	NP_001309209.1	NucleotideSequenceId: NM_001322280.2	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	RefSeq	NP_057113.1	NucleotideSequenceId: NM_016029.4	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	AlphaFoldDB	Q9Y394	Description: -	alphafold
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	SMR	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	BioGRID	119649	Interactions: 175	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	FunCoup	Q9Y394	Number of interactors: 1055	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	IntAct	Q9Y394	Interactions: 106	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	MINT	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	STRING	9606.ENSP00000216500	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GlyGen	Q9Y394	glycosylation: 1 site, 1 O-linked glycan (1 site)	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	iPTMnet	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PhosphoSitePlus	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	SwissPalm	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	BioMuta	DHRS7	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	DMDM	34395856	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	jPOST	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	MassIVE	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PaxDb	9606-ENSP00000216500	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PeptideAtlas	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	ProteomicsDB	85986	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	ProteomicsDB	85987	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Pumba	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Antibodypedia	24356	antibodies: 233 antibodies from 28 providers	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	DNASU	51635	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Ensembl	ENST00000216500.9	ProteinId: ENSP00000216500.5; GeneId: ENSG00000100612.15	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Ensembl	ENST00000536410.6	ProteinId: ENSP00000442993.2; GeneId: ENSG00000100612.15	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Ensembl	ENST00000557185.6	ProteinId: ENSP00000451882.1; GeneId: ENSG00000100612.15	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GeneID	51635	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	KEGG	hsa:51635	Description: -	pathway
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	MANE-Select	ENST00000557185.6	ProteinId: ENSP00000451882.1; RefSeqNucleotideId: NM_016029.4; RefSeqProteinId: NP_057113.1	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	UCSC	uc001xes.5	OrganismName: human	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	AGR	HGNC:21524	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	ClinPGx	PA134974539	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	CTD	51635	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	DisGeNET	51635	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GeneCards	DHRS7	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	HGNC	HGNC:21524	GeneName: DHRS7	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	HPA	ENSG00000100612	ExpressionPatterns: Tissue enhanced (skeletal)	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	MIM	612833	Type: gene	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	OpenTargets	ENSG00000100612	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	VEuPathDB	HostDB:ENSG00000100612	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	eggNOG	KOG1205	ToxonomicScope: Eukaryota	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GeneTree	ENSGT00940000155226	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	HOGENOM	CLU_010194_2_1_1	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	InParanoid	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	OMA	TWAWWLT	Fingerprint: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	OrthoDB	1933717at2759	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PAN-GO	Q9Y394	Number of GO annotations: 0 GO annotations based on evolutionary models	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PhylomeDB	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PathwayCommons	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	SignaLink	Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Agora	ENSG00000100612	NominatedTarget: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	BioGRID-ORCS	51635	hits: 12 hits in 1162 CRISPR screens	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	ChiTaRS	DHRS7	OrganismName: human	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GenomeRNAi	51635	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Pharos	Q9Y394	DevelopmentLevel: Tbio	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PRO	PR:Q9Y394	Description: -	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Proteomes	UP000005640	Component: Chromosome 14	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	RNAct	Q9Y394	moleculeType: protein	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Bgee	ENSG00000100612	ExpressionPatterns: Expressed in parotid gland and 204 other cell types or tissues	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	ExpressionAtlas	Q9Y394	ExpressionPatterns: baseline and differential	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GO	GO:0005789	GoTerm: C:endoplasmic reticulum membrane; GoEvidenceType: IDA:UniProtKB	go
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GO	GO:0016020	GoTerm: C:membrane; GoEvidenceType: HDA:UniProtKB	go
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GO	GO:0052650	GoTerm: F:all-trans-retinol dehydrogenase (NADP+) activity; GoEvidenceType: IDA:UniProtKB	go
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GO	GO:0004090	GoTerm: F:carbonyl reductase (NADPH) activity; GoEvidenceType: IDA:UniProtKB	go
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	GO	GO:0016616	GoTerm: F:oxidoreductase activity, acting on the CH-OH group of donors, NAD or NADP as acceptor; GoEvidenceType: IDA:UniProtKB	go
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	CDD	cd05332	EntryName: 11beta-HSD1_like_SDR_c; MatchStatus: 1	ontology
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	FunFam	3.40.50.720:FF:000478	EntryName: Dehydrogenase/reductase SDR family member 7; MatchStatus: 1	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Gene3D	3.40.50.720	EntryName: NAD(P)-binding Rossmann-like Domain; MatchStatus: 1	ontology
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	InterPro	IPR036291	EntryName: NAD(P)-bd_dom_sf	interpro
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	InterPro	IPR020904	EntryName: Sc_DH/Rdtase_CS	interpro
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	InterPro	IPR002347	EntryName: SDR_fam	interpro
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	InterPro	IPR053011	EntryName: SDR_family_member_7	interpro
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PANTHER	PTHR44269	EntryName: DEHYDROGENASE/REDUCTASE SDR FAMILY MEMBER 7-RELATED; MatchStatus: 1	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PANTHER	PTHR44269:SF1	EntryName: DEHYDROGENASE_REDUCTASE SDR FAMILY MEMBER 7; MatchStatus: 1	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	Pfam	PF00106	EntryName: adh_short; MatchStatus: 1	pfam
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PRINTS	PR00081	EntryName: GDHRDH	ontology
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PRINTS	PR00080	EntryName: SDRFAMILY	ontology
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	SUPFAM	SSF51735	EntryName: NAD(P)-binding Rossmann-fold domains; MatchStatus: 1	reference
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	PROSITE	PS00061	EntryName: ADH_SHORT; MatchStatus: 1	ontology
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	EMBL	Z38061	ProteinId: CAA86195.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	EMBL	AY692591	ProteinId: AAT92610.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	EMBL	BK006942	ProteinId: DAA08582.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PIR	S48497	EntryName: S48497	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	RefSeq	NP_012301.3	NucleotideSequenceId: NM_001179557.3	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PDB	3KZV	Method: X-ray; Resolution: 2.00 A; Chains: A=1-254	pdb
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PDB	6UHX	Method: X-ray; Resolution: 2.75 A; Chains: A/B=1-254	pdb
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PDBsum	3KZV	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PDBsum	6UHX	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	AlphaFoldDB	P40579	Description: -	alphafold
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	SMR	P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	BioGRID	35026	Interactions: 52	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	DIP	DIP-4612N	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	FunCoup	P40579	Number of interactors: 112	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	IntAct	P40579	Interactions: 4	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	MINT	P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	STRING	4932.YIR035C	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	iPTMnet	P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PaxDb	4932-YIR035C	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PeptideAtlas	P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	EnsemblFungi	YIR035C_mRNA	ProteinId: YIR035C; GeneId: YIR035C	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	GeneID	854853	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	KEGG	sce:YIR035C	Description: -	pathway
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	AGR	SGD:S000001474	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	SGD	S000001474	GeneName: NRE1	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	VEuPathDB	FungiDB:YIR035C	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	eggNOG	KOG1204	ToxonomicScope: Eukaryota	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	HOGENOM	CLU_010194_2_11_1	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	InParanoid	P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	OMA	SHVDEWR	Fingerprint: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	OrthoDB	153074at2759	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	BioCyc	YEAST:G3O-31449-MONOMER	Description: -	pathway
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	BioGRID-ORCS	854853	hits: 0 hits in 10 CRISPR screens	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	EvolutionaryTrace	P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PRO	PR:P40579	Description: -	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	Proteomes	UP000002311	Component: Chromosome IX	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	RNAct	P40579	moleculeType: protein	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	GO	GO:0005737	GoTerm: C:cytoplasm; GoEvidenceType: HDA:SGD	go
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	GO	GO:0050664	GoTerm: F:oxidoreductase activity, acting on NAD(P)H, oxygen as acceptor; GoEvidenceType: IBA:GO_Central	go
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	GO	GO:0016616	GoTerm: F:oxidoreductase activity, acting on the CH-OH group of donors, NAD or NADP as acceptor; GoEvidenceType: IDA:SGD	go
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	CDD	cd05367	EntryName: SPR-like_SDR_c; MatchStatus: 1	ontology
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	FunFam	3.40.50.720:FF:000281	EntryName: Uncharacterized oxidoreductase YIR035C; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	Gene3D	3.40.50.720	EntryName: NAD(P)-binding Rossmann-like Domain; MatchStatus: 1	ontology
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	InterPro	IPR036291	EntryName: NAD(P)-bd_dom_sf	interpro
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	InterPro	IPR020904	EntryName: Sc_DH/Rdtase_CS	interpro
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	InterPro	IPR002347	EntryName: SDR_fam	interpro
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PANTHER	PTHR43008	EntryName: BENZIL REDUCTASE; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PANTHER	PTHR43008:SF8	EntryName: BENZIL REDUCTASE ((S)-BENZOIN FORMING) IRC24; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	Pfam	PF00106	EntryName: adh_short; MatchStatus: 1	pfam
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PRINTS	PR00081	EntryName: GDHRDH	ontology
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PRINTS	PR00080	EntryName: SDRFAMILY	ontology
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	SUPFAM	SSF51735	EntryName: NAD(P)-binding Rossmann-fold domains; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR035C	saccharomyces_cerevisiae	YIR035C	P40579	PROSITE	PS00061	EntryName: ADH_SHORT; MatchStatus: 1	ontology
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	EMBL	Z38061	ProteinId: CAA86196.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	EMBL	AY558240	ProteinId: AAS56566.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	EMBL	AB052924	ProteinId: BAB86002.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	EMBL	BK006942	ProteinId: DAA08583.1; Status: -; MoleculeType: Genomic_DNA	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PIR	S48498	EntryName: S48498	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	RefSeq	NP_012302.3	NucleotideSequenceId: NM_001179558.3	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	AlphaFoldDB	P40580	Description: -	alphafold
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	SMR	P40580	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	BioGRID	35027	Interactions: 32	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	DIP	DIP-4707N	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	FunCoup	P40580	Number of interactors: 123	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	STRING	4932.YIR036C	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	iPTMnet	P40580	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PaxDb	4932-YIR036C	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PeptideAtlas	P40580	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	EnsemblFungi	YIR036C_mRNA	ProteinId: YIR036C; GeneId: YIR036C	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	GeneID	854854	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	KEGG	sce:YIR036C	Description: -	pathway
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	AGR	SGD:S000001475	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	SGD	S000001475	GeneName: IRC24	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	VEuPathDB	FungiDB:YIR036C	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	eggNOG	KOG1204	ToxonomicScope: Eukaryota	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	HOGENOM	CLU_010194_2_11_1	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	InParanoid	P40580	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	OMA	PGDMATD	Fingerprint: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	OrthoDB	153074at2759	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	BioCyc	YEAST:G3O-31450-MONOMER	Description: -	pathway
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	BioGRID-ORCS	854854	hits: 0 hits in 10 CRISPR screens	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PRO	PR:P40580	Description: -	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	Proteomes	UP000002311	Component: Chromosome IX	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	RNAct	P40580	moleculeType: protein	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	GO	GO:0005737	GoTerm: C:cytoplasm; GoEvidenceType: HDA:SGD	go
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	GO	GO:0050664	GoTerm: F:oxidoreductase activity, acting on NAD(P)H, oxygen as acceptor; GoEvidenceType: IDA:SGD	go
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	GO	GO:0016616	GoTerm: F:oxidoreductase activity, acting on the CH-OH group of donors, NAD or NADP as acceptor; GoEvidenceType: IDA:SGD	go
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	CDD	cd05367	EntryName: SPR-like_SDR_c; MatchStatus: 1	ontology
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	FunFam	3.40.50.720:FF:000281	EntryName: Uncharacterized oxidoreductase YIR035C; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	Gene3D	3.40.50.720	EntryName: NAD(P)-binding Rossmann-like Domain; MatchStatus: 1	ontology
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	InterPro	IPR036291	EntryName: NAD(P)-bd_dom_sf	interpro
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	InterPro	IPR020904	EntryName: Sc_DH/Rdtase_CS	interpro
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	InterPro	IPR002347	EntryName: SDR_fam	interpro
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PANTHER	PTHR43008	EntryName: BENZIL REDUCTASE; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PANTHER	PTHR43008:SF8	EntryName: BENZIL REDUCTASE ((S)-BENZOIN FORMING) IRC24; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	Pfam	PF00106	EntryName: adh_short; MatchStatus: 1	pfam
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PRINTS	PR00081	EntryName: GDHRDH	ontology
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	SUPFAM	SSF51735	EntryName: NAD(P)-binding Rossmann-fold domains; MatchStatus: 1	reference
+saccharomyces_cerevisiae__YIR036C	saccharomyces_cerevisiae	YIR036C	P40580	PROSITE	PS00061	EntryName: ADH_SHORT; MatchStatus: 1	ontology
+homo_sapiens__ENSP00000216500	homo_sapiens	DHRS7	Q9Y394	AlphaFoldDB	AF-Q9Y394-F1	Dehydrogenase/reductase SDR family member 7	alphafold

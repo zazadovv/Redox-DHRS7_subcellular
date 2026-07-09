@@ -1,0 +1,31 @@
+# Conda environment for reproducing the DHRS7 alignment analysis and figure.
+#
+#   conda env create -f phylo.yml
+#   conda activate phylo
+#   python Reproduce_DHRS7_Figure.py
+#
+# These five packages are the ONLY ones the reproduction needs (everything else it
+# uses is in the Python standard library). Tested versions are noted in comments;
+# leaving them unpinned lets conda resolve a compatible set on Windows, macOS and
+# Linux.
+#
+# MUSCLE (the aligner) is installed SEPARATELY because it has no Windows conda
+# build:
+#   * macOS / Linux:  conda install -n phylo -c bioconda muscle
+#                     (or uncomment "- bioconda::muscle" below and re-create)
+#   * Windows:        download muscle.exe from
+#                     https://github.com/rcedgar/muscle/releases and put it on
+#                     PATH, or in a "tools/" folder next to the scripts, or set
+#                     the MUSCLE_EXE environment variable to its full path.
+name: phylo
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - biopython      # tested 1.87  — ortholog sequence I/O, pairwise/MSA handling
+  - pandas         # tested 2.3.3 — tabular data (orthologs, conservation, metadata)
+  - numpy          # tested 1.24.4 — numeric arrays / conservation math
+  - matplotlib-base  # tested 3.10.8 — SVG/PNG plots (Agg backend; no GUI needed)
+  - requests       # tested 2.33.1 — Ensembl / UniProt / AlphaFold REST calls
+  # - bioconda::muscle   # uncomment on macOS/Linux to install MUSCLE here

@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Local environment / tooling (not part of the repository)
+tools/
+muscle
+muscle.exe
+ca_bundle.pem
+.env
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# A freshly regenerated run (delete this line if you want to commit new output).
+# The reference run is committed as DHRS7_Output/ ; a re-run overwrites it.
+# DHRS7_Output/

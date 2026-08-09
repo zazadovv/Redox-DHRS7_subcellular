@@ -373,7 +373,8 @@ python MSA_GUI.py
 
 If your local environment has a different name, activate the environment containing the dependencies listed in `phylo.yml`.
 
-<!-- Insert the launch screenshot here. -->
+<img width="1170" height="980" alt="Screenshot 2026-08-09 172707" src="https://github.com/user-attachments/assets/ef97b47e-b3ed-4f4d-a9b7-9c5f4e115886" />
+
 
 ### Configuring the analysis
 

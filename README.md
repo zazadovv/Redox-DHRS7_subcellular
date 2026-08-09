@@ -355,7 +355,6 @@ Python 3.10 + biopython / pandas / numpy / matplotlib / requests (via `phylo.yml
 **MUSCLE v5** (on `PATH` or via `MUSCLE_EXE`), and internet access to Ensembl,
 UniProt and AlphaFold. A Chromium/Edge/Chrome browser is optional (PNG
 rasterization only; the SVG is the primary deliverable).
----
 
 ---
 

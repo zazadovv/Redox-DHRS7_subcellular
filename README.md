@@ -442,6 +442,7 @@ Human remains the reference species, and the displayed species can be arranged b
 
 <img width="1792" height="1050" alt="Screenshot 2026-08-09 174102" src="https://github.com/user-attachments/assets/c799492b-5f28-4b35-974b-59d937504fcf" />
 
+<img width="4332" height="4314" alt="alignment_browser_aligned_reference_projected_species_snapshot_rpl70" src="https://github.com/user-attachments/assets/995ad64c-49b6-4a6f-a4a1-b9c433b32b75" />
 
 ---
 

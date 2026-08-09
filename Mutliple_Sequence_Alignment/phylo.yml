@@ -2,12 +2,26 @@
 #
 #   conda env create -f phylo.yml
 #   conda activate phylo
-#   python Reproduce_DHRS7_Figure.py
+#   python dhrs7_alignment.py
 #
-# These five packages are the ONLY ones the reproduction needs (everything else it
-# uses is in the Python standard library). Tested versions are noted in comments;
-# leaving them unpinned lets conda resolve a compatible set on Windows, macOS and
-# Linux.
+# These five packages are the ONLY ones the analysis needs; everything else it
+# uses is in the Python standard library.
+#
+# Versions are left unpinned so conda can resolve a working set on Windows, macOS
+# and Linux, and the comments record what the released run was built with. The
+# versions that actually ran are written to environment.txt in the output
+# directory and repeated in METHODS_DHRS7.md, so the software behind any set of
+# results can be checked rather than inferred from this file.
+#
+# To reproduce the released run exactly rather than approximately, pin the
+# versions in the comments:
+#   - python=3.10.20
+#   - biopython=1.87
+#   - pandas=2.3.3
+#   - numpy=1.24.4
+#   - matplotlib-base=3.10.8
+#   - requests=2.33.1
+#   plus MUSCLE 5.3 (build d9725ac)
 #
 # MUSCLE (the aligner) is installed SEPARATELY because it has no Windows conda
 # build:

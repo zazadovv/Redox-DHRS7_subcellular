@@ -30,35 +30,30 @@ DEFAULT_SQLITE_ARCHIVE_PATH = Path(__file__).resolve().with_name("phylo_runs.sql
 INTERACTIVE_REPORT_FILENAME = "interactive_report.html"
 
 # ---------------------------------------------------------------------------#
-# V11: gene-agnostic labelling. V9.9 hard-coded "PLA2G4A" into several figure
-# titles and HTML strings. V11 must work for ANY input gene, so we keep a
-# single process-level "active gene symbol" that figure/report builders read
-# via v11_gene_label(). The pipeline sets it from args.gene_symbol; the
-# archive's export_output_archive sets it from run_meta. Domain-coordinate
-# annotations that are genuinely PLA2G4A-specific (the PL/C2/PLLLLTP/DELD
-# ruler, the P47712 reference accession) are gated behind v11_is_pla2g4a().
+# Gene-agnostic labelling. Figure titles and HTML strings must never hard-code
+# a gene symbol, so a single process-level "active gene symbol" is kept here
+# and read by the figure and report builders via active_gene_label(). The pipeline
+# sets it from args.gene_symbol; the archive's export_output_archive sets it
+# from run_meta. Anything that depends on a particular gene's residue
+# coordinates lives in the gene-keyed tables further down, so it stays inert
+# unless an entry for the active gene exists.
 # ---------------------------------------------------------------------------#
-_V11_ACTIVE_GENE_SYMBOL: str = "the target gene"
+_ACTIVE_GENE_SYMBOL: str = "the target gene"
 
 
-def v11_set_active_gene(symbol: Optional[str]) -> None:
+def set_active_gene(symbol: Optional[str]) -> None:
     """Set the process-level active gene symbol used for figure/report labels."""
-    global _V11_ACTIVE_GENE_SYMBOL
+    global _ACTIVE_GENE_SYMBOL
     if symbol and str(symbol).strip():
-        _V11_ACTIVE_GENE_SYMBOL = str(symbol).strip()
+        _ACTIVE_GENE_SYMBOL = str(symbol).strip()
 
 
-def v11_gene_label() -> str:
+def active_gene_label() -> str:
     """Return the active gene symbol for labelling (falls back to a neutral
     phrase if never set)."""
-    return _V11_ACTIVE_GENE_SYMBOL
+    return _ACTIVE_GENE_SYMBOL
 
 
-def v11_is_pla2g4a() -> bool:
-    """True when the active gene is PLA2G4A — gates PLA2G4A-specific domain
-    annotations (PL/C2/PLLLLTP/DELD ruler, P47712 reference) that are
-    meaningless for other genes."""
-    return str(_V11_ACTIVE_GENE_SYMBOL).strip().upper() == "PLA2G4A"
 ALIGNMENT_BROWSER_FILENAME = "alignment_browser.html"
 PAIRWISE_DIRNAME = "pairwise_human_reference_alignments"
 ALPHAFOLD_METADATA_FILENAME = "human_reference_alphafold_metadata.json"
@@ -72,39 +67,19 @@ NODE_CONSERVATION_TREE_SVG_FILENAME = "node_conservation_extremes_tree.svg"
 NODE_CONSERVATION_PAPER_TREE_SVG_FILENAME = "node_conservation_extremes_paper_tree.svg"
 NODE_CONSERVATION_REJECTED_SEQUENCE_FILENAME = "node_conservation_rejected_sequences.fasta"
 BLOSUM62 = substitution_matrices.load("BLOSUM62")
-COMPARATIVE_ALPHAFOLD_ACCESSION_OVERRIDES: Dict[Tuple[str, str], Dict[str, Any]] = {
-    ("danio_rerio", "ENSDARP00000090686"): {
-        "uniprot_accession": "P50392",
-        "alphafold_entry_id": "AF-P50392-F1",
-        "alphafold_source_label": "AlphaFold DB P50392 Danio rerio PLA2G4A",
-        "model_filename": "AF-P50392-F1-model_v6.pdb",
-        "sequence_length": 741,
-    },
-    ("danio_rerio", "danio_rerio__ENSDARP00000090686"): {
-        "uniprot_accession": "P50392",
-        "alphafold_entry_id": "AF-P50392-F1",
-        "alphafold_source_label": "AlphaFold DB P50392 Danio rerio PLA2G4A",
-        "model_filename": "AF-P50392-F1-model_v6.pdb",
-        "sequence_length": 741,
-    },
-    ("danio_rerio", "ENSDARG00000024546"): {
-        "uniprot_accession": "P50392",
-        "alphafold_entry_id": "AF-P50392-F1",
-        "alphafold_source_label": "AlphaFold DB P50392 Danio rerio PLA2G4A",
-        "model_filename": "AF-P50392-F1-model_v6.pdb",
-        "sequence_length": 741,
-    },
-}
+# Per-species AlphaFold accession substitutions, keyed by (species, record key).
+# Populated from the curated table below.
+COMPARATIVE_ALPHAFOLD_ACCESSION_OVERRIDES: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
-# V12: DHRS7-specific real per-species structure substitutions. These re-point
-# the comparative-AlphaFold lookup at genuine species (or, for bovine, the
-# Q24K14 Bos taurus) models so the secondary-structure track stops falling back
+# DHRS7-specific real per-species structure substitutions. These re-point the
+# comparative-AlphaFold lookup at genuine species models (for bovine, the
+# Q24K14 Bos taurus entry) so the secondary-structure track stops falling back
 # to the human reference projection. Keyed by protein-record id, bare Ensembl
 # protein id, and gene id so the override matches however the header is parsed.
-# See V12_README.md. The accessions were validated by pairwise identity vs the
-# aligned species record (rattus D4A0T8 100%, danio Q0P3U1 99.4%, bos Q24K14
-# 100% over its 344 aligned residues).
-_V12_DHRS7_STRUCTURE_OVERRIDES: Dict[str, Dict[str, Any]] = {
+# The accessions were validated by pairwise identity against the aligned
+# species record: rattus D4A0T8 100%, danio Q0P3U1 99.4%, bos Q24K14 100% over
+# its 344 aligned residues.
+DHRS7_STRUCTURE_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "bos_taurus": {
         "keys": ["bos_taurus__ENSBTAP00000086519", "ENSBTAP00000086519", "ENSBTAG00000020729"],
         "payload": {
@@ -138,9 +113,10 @@ _V12_DHRS7_STRUCTURE_OVERRIDES: Dict[str, Dict[str, Any]] = {
         },
     },
 }
-for _v12_species, _v12_cfg in _V12_DHRS7_STRUCTURE_OVERRIDES.items():
-    for _v12_key in _v12_cfg["keys"]:
-        COMPARATIVE_ALPHAFOLD_ACCESSION_OVERRIDES[(_v12_species, _v12_key)] = dict(_v12_cfg["payload"])
+for _override_species, _override_cfg in DHRS7_STRUCTURE_OVERRIDES.items():
+    for _override_key in _override_cfg["keys"]:
+        COMPARATIVE_ALPHAFOLD_ACCESSION_OVERRIDES[(_override_species, _override_key)] = \
+            dict(_override_cfg["payload"])
 
 GAP_CHARS = {"-", "."}
 AA_COLORS: Dict[str, str] = {
@@ -211,144 +187,25 @@ ALPHAFOLD_STRUCTURE_COLORS = {
     "calcium": "#0891b2",
     "calcium_ligand": "#0f172a",
 }
-ALIGNMENT_BROWSER_REFERENCE_LANDMARKS = (
-    ("Phospholipid binding", "PL (Phospholipid binding)", "#0f766e"),
-    ("C2", "C2", "#f59e0b"),
-    ("PLA2c", "PLA2c", "#7c3aed"),
-)
-ALIGNMENT_BROWSER_REFERENCE_MOTIF_SEARCHES: Dict[str, Sequence[Dict[str, Any]]] = {
-    "PLA2G4A": (
-        {
-            "label": "Import motif (PLLLLTP)",
-            "motifs": ("PLLLLTP",),
-            "color": "#a16207",
-            "description": "Potential import motif",
-        },
-        {
-            "label": "Caspase site",
-            "motifs": ("DELD", "DEVD"),
-            "color": "#b91c1c",
-            "description": "Candidate caspase cleavage motif",
-        },
-    ),
-}
+# Optional curated overlays for the alignment browser. Each entry is opt-in per
+# gene; with no entry for the active gene the browser draws only the domain
+# landmarks that come from the gene's own UniProt/InterPro feature table.
+#
+#   ALIGNMENT_BROWSER_REFERENCE_LANDMARKS
+#       (feature description, display label, colour) triples matched against the
+#       "description" column of the reference feature table.
+#   ALIGNMENT_BROWSER_REFERENCE_MOTIF_SEARCHES
+#       gene symbol -> motif strings searched in the reference sequence.
+#   ALIGNMENT_BROWSER_REFERENCE_POSITION_LANDMARKS
+#       gene symbol -> single reference positions to mark (catalytic residues
+#       and the like), in 1-based reference numbering.
+#
+# DHRS7 is annotated from its own feature table, so all three are empty.
+ALIGNMENT_BROWSER_REFERENCE_LANDMARKS: Sequence[Tuple[str, str, str]] = ()
 
-ALIGNMENT_BROWSER_REFERENCE_POSITION_LANDMARKS: Dict[str, Sequence[Dict[str, Any]]] = {
-    "PLA2G4A": (
-        {
-            "label": "S228 nucleophile",
-            "row_label": "Catalytic residues",
-            "position": 228,
-            "color": "#ef4444",
-            "description": "Catalytic nucleophile",
-        },
-        {
-            "label": "D549 proton acceptor",
-            "row_label": "Catalytic residues",
-            "position": 549,
-            "color": "#2563eb",
-            "description": "Catalytic proton acceptor",
-        },
-    ),
-}
+ALIGNMENT_BROWSER_REFERENCE_MOTIF_SEARCHES: Dict[str, Sequence[Dict[str, Any]]] = {}
 
-PLA2G4A_CALCIUM_BINDING_ANNOTATION: Dict[str, Any] = {
-    "available": True,
-    "label": "Ca2+ binding sites",
-    "note": (
-        "Human cPLA2-alpha C2 domain calcium binding is mediated by three calcium-binding regions "
-        "(CBR1-CBR3). Lipid-free cPLA2-alpha C2-domain structures report two canonical Ca2+ ions; "
-        "the later DHPC-bound Patel/Brown/Chalfant structure reports a third Ca2+ (CaPC) that bridges "
-        "the C2 domain to the phosphatidylcholine phosphate."
-    ),
-    "sources": [
-        {
-            "label": "Hirano et al. eLife 2019;8:e44760 / PDB 6IEJ",
-            "url": "https://elifesciences.org/articles/44760",
-            "note": "Dinshaw Patel coauthor study of cPLA2-alpha C2 domain bound to DHPC and Ca2+; reports third CaPC bridge and PC recognition by N65/Y96.",
-        },
-        {
-            "label": "Xu et al. J Mol Biol 1998;280:485-500",
-            "url": "https://pubmed.ncbi.nlm.nih.gov/9665851/",
-            "note": "Human cPLA2 C2-domain solution study reporting two Ca2+ binding events.",
-        },
-        {
-            "label": "Bittova et al. J Biol Chem 1999;274:9665-9672",
-            "url": "https://www.sciencedirect.com/science/article/pii/S0021925819873027",
-            "note": "Mutational study of essential Ca2+ ligands D40, D43, N65, D93, and N95.",
-        },
-        {
-            "label": "NCBI CDD C2_cPLA2",
-            "url": "https://www.ncbi.nlm.nih.gov/Structure/cdd/cd04036",
-            "note": "C2_cPLA2 domains contain Ca2+-binding regions with acidic Ca2+ ligands.",
-        },
-    ],
-    "loops": [
-        {
-            "label": "CBR1",
-            "start": 31,
-            "end": 43,
-            "color": "#06b6d4",
-            "description": "Ca2+/membrane loop I; includes D40, T41 backbone carbonyl, and D43 ligands.",
-        },
-        {
-            "label": "CBR2",
-            "start": 61,
-            "end": 67,
-            "color": "#0891b2",
-            "description": "Ca2+/membrane loop II; includes N65 ligand.",
-        },
-        {
-            "label": "CBR3",
-            "start": 93,
-            "end": 101,
-            "color": "#0e7490",
-            "description": "Ca2+/membrane loop III; includes D93, A94 backbone carbonyl, N95, and the site-III-disrupting N95 position.",
-        },
-    ],
-    "ligands": [
-        {"position": 40, "label": "D40", "sites": ["site I", "site II"]},
-        {"position": 41, "label": "T41 carbonyl", "sites": ["site I"]},
-        {"position": 43, "label": "D43", "sites": ["site I", "site II"]},
-        {"position": 62, "label": "H62 PC contact", "sites": ["DHPC headgroup contact"], "color": "#f59e0b"},
-        {"position": 64, "label": "N64 PC contact", "sites": ["DHPC headgroup contact"], "color": "#f59e0b"},
-        {"position": 65, "label": "N65", "sites": ["site I", "CaPC/DHPC bridge", "PC selectivity"]},
-        {"position": 93, "label": "D93", "sites": ["site II"]},
-        {"position": 94, "label": "A94 carbonyl", "sites": ["site II", "DHPC headgroup contact"]},
-        {"position": 95, "label": "N95", "sites": ["site II", "site III analog attenuated"]},
-        {"position": 96, "label": "Y96 PC cation-pi", "sites": ["PC trimethylammonium recognition"], "color": "#f59e0b"},
-    ],
-    "sites": [
-        {
-            "label": "Ca2+ site I",
-            "start": 40,
-            "end": 65,
-            "residues": [40, 41, 43, 65],
-            "description": "Reported ligands: D40, T41 backbone carbonyl, D43, N65, plus waters.",
-        },
-        {
-            "label": "Ca2+ site II",
-            "start": 40,
-            "end": 95,
-            "residues": [40, 43, 93, 94, 95],
-            "description": "Reported ligands: D40, D43, D93 bidentate, A94 backbone carbonyl, N95, plus water.",
-        },
-        {
-            "label": "Ca2+ site III analog",
-            "start": 93,
-            "end": 99,
-            "residues": [95],
-            "description": "The analogous third site is not occupied in cPLA2; N95 replaces the Asp found in other C2 domains.",
-        },
-        {
-            "label": "CaPC/DHPC bridge",
-            "start": 62,
-            "end": 96,
-            "residues": [62, 64, 65, 94, 96],
-            "description": "DHPC-bound 6IEJ contains a third Ca2+ that bridges DHPC phosphate/sn-1 carbonyl contacts and interacts with N65; Y96 recognizes the PC trimethylammonium group.",
-        },
-    ],
-}
+ALIGNMENT_BROWSER_REFERENCE_POSITION_LANDMARKS: Dict[str, Sequence[Dict[str, Any]]] = {}
 
 ALIGNMENT_BROWSER_SCOPES: Dict[str, Dict[str, str]] = {
     "aligned_reference_projected": {
@@ -441,20 +298,20 @@ FASTA_SPECS: Dict[str, str] = {
 }
 
 TABLE_DISPLAY_SPECS: Dict[str, Dict[str, Any]] = {
-    "v11_representatives": {
+    "representatives": {
         "columns": [
             "clade", "species", "protein_label", "taxonomy_level",
             "mean_identity", "overlapping_positions", "identical_positions",
             "is_reference", "is_mandatory", "selection_rank", "record_id",
         ],
     },
-    "v11_motifs_master": {
+    "motifs_master": {
         "columns": [
             "motif_id", "label", "source", "start", "end",
             "motif_name", "matched_seq", "description", "citation", "regex",
         ],
     },
-    "v11_motif_evolution_per_clade": {
+    "motif_evolution_per_clade": {
         "columns": [
             "motif_id", "label", "clade", "n_species",
             "reference_motif", "consensus_motif",
@@ -462,7 +319,7 @@ TABLE_DISPLAY_SPECS: Dict[str, Dict[str, Any]] = {
             "consensus_count", "start", "end",
         ],
     },
-    "v11_lineage_stabilization": {
+    "lineage_stabilization": {
         "columns": [
             "reference_ungapped_position", "reference_residue",
             "ancestral_entropy", "ancestral_n",
@@ -701,7 +558,7 @@ def load_output_table(outdir: Path, filename: str, sep: str) -> pd.DataFrame:
     try:
         return pd.read_csv(path, sep=sep)
     except pd.errors.EmptyDataError:
-        # V11: tolerate header-less / empty CSVs (e.g. when no annotated sites match)
+        # tolerate header-less / empty CSVs (e.g. when no annotated sites match)
         # so the archive step doesn't abort the whole interactive-report build.
         return pd.DataFrame()
 
@@ -1923,7 +1780,7 @@ def write_node_conservation_tree_svg(node_df: pd.DataFrame, out_path: Path) -> O
         "</style>",
         f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
         '<rect x="0" y="0" width="100%" height="58" fill="#f8fafc"/>',
-        f'<text class="title" x="{left}" y="27">{escape(v11_gene_label())} node conservation extremes</text>',
+        f'<text class="title" x="{left}" y="27">{escape(active_gene_label())} node conservation extremes</text>',
         f'<text class="subtitle" x="{left}" y="47">Compact evolutionary margin plus independent identity-range table; rejected length-filter records are included when raw sequence is available.</text>',
         f'<text class="colhead" x="{tree_x}" y="{top - 28}">evolutionary margin</text>',
         f'<text class="colhead" x="{table_x}" y="{top - 28}">node</text>',
@@ -2140,8 +1997,8 @@ def write_node_conservation_paper_tree_svg(node_df: pd.DataFrame, out_path: Path
         ".axis{font:500 8.5px Arial,Helvetica,sans-serif;fill:#6b7280}"
         "</style>",
         f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
-        f'<text class="title" x="24" y="30">{escape(v11_gene_label())} evolutionary conservation scan across sampled vertebrates</text>',
-        f'<text class="subtitle" x="24" y="48">Simplified cladogram summary; ~Ma labels are approximate branch intervals, and percent ranges are identity to human {escape(v11_gene_label())}.</text>',
+        f'<text class="title" x="24" y="30">{escape(active_gene_label())} evolutionary conservation scan across sampled vertebrates</text>',
+        f'<text class="subtitle" x="24" y="48">Simplified cladogram summary; ~Ma labels are approximate branch intervals, and percent ranges are identity to human {escape(active_gene_label())}.</text>',
         f'<text class="axis" x="{bar_x}" y="61">45%</text>',
         f'<text class="axis" x="{bar_x + bar_width * (75 - bar_min) / (bar_max - bar_min):.1f}" y="61" text-anchor="middle">75%</text>',
         f'<text class="axis" x="{bar_x + bar_width}" y="61" text-anchor="end">100%</text>',
@@ -2745,7 +2602,7 @@ def architecture_svg_helix_element(
     title: str = "",
     stroke_width: Optional[float] = None,
 ) -> str:
-    """V11 helix renderer. Branches on css_class:
+    """Helix renderer. Branches on css_class:
 
     * css_class == "snapshot-ss-helix": cursive teardrop loops (cubic Bezier
       per loop with overshooting control points so the curve self-crosses
@@ -2754,7 +2611,7 @@ def architecture_svg_helix_element(
       reads better than a zigzag at small sizes.
 
     * everything else (architecture, comparative AF SS, AlphaFold track,
-      stacked-lane views): V9.7-style sharp zigzag polyline. The label/
+      stacked-lane views): the established sharp zigzag polyline. The label/
       color-heavy architecture row reads much more cleanly with this
       compact ±4 px sawtooth than with tall loops that crowd the H1..Hn
       labels."""
@@ -3326,7 +3183,7 @@ def build_comparative_full_alignment_reference_maps(outdir: Path,
         row = {
             "alignment_record_id": record_id,
             "species_sequence_length": species_position,
-            # V12: full ungapped species sequence (positions align 1:1 with the
+            # full ungapped species sequence (positions align 1:1 with the
             # keys of position_to_reference) so a substituted AlphaFold model can
             # be pairwise-aligned to it before its SS ranges are mapped.
             "species_ungapped_sequence": species_ungapped_sequence,
@@ -3518,7 +3375,7 @@ _THREE_TO_ONE_AA = {
 
 
 def model_residue_one_letter_sequence(model_residues: Sequence[Dict[str, Any]]) -> Tuple[List[int], str]:
-    """(V12) Return (pdb_positions, one_letter_sequence) for an AlphaFold model's
+    """Return (pdb_positions, one_letter_sequence) for an AlphaFold model's
     residues, ordered by PDB residue number. Used to align a substituted model
     against the aligned species sequence so its secondary-structure ranges map by
     residue identity rather than by raw residue index."""
@@ -3538,7 +3395,7 @@ def build_model_position_to_reference(model_residues: Sequence[Dict[str, Any]],
                                       species_ungapped_sequence: str,
                                       position_to_reference: Dict[int, int],
                                       min_identity: float = 0.70) -> Tuple[Dict[int, int], float]:
-    """(V12) Map an AlphaFold model's PDB residue positions -> reference positions
+    """Map an AlphaFold model's PDB residue positions -> reference positions
     by pairwise-aligning the model sequence to the full ungapped species sequence
     and composing with the species-position -> reference-position map. This keeps
     the comparative secondary-structure bar correct when a substituted model
@@ -3703,7 +3560,7 @@ def build_comparative_alphafold_secondary_structure_payload(outdir: Path,
             model_residues = model_secondary_structure.get("residues") if isinstance(model_secondary_structure, dict) else []
             position_to_reference = alignment_map.get("position_to_reference") or {}
             if model_secondary_structure.get("available") and isinstance(model_residues, list) and isinstance(position_to_reference, dict):
-                # V12: map the model's SS by residue identity (pairwise-align the
+                # map the model's SS by residue identity (pairwise-align the
                 # model sequence to the full species sequence) rather than by raw
                 # residue index, so substituted / length-mismatched models still
                 # land on the correct reference positions. Falls back to the
@@ -4101,24 +3958,15 @@ def build_local_charge_payload(sequence: str, window_size: int = 5) -> Dict[str,
 
 
 def build_calcium_binding_payload(gene_symbol: Optional[str]) -> Dict[str, Any]:
-    if str(gene_symbol or "").strip().upper() != "PLA2G4A":
-        return {"available": False, "reason": "No curated Ca2+ binding annotation is bundled for this gene."}
-    payload = dict(PLA2G4A_CALCIUM_BINDING_ANNOTATION)
-    ranges = []
-    for loop in payload.get("loops") or []:
-        ranges.append({
-            "source": "curated_calcium_binding",
-            "kind": "calcium",
-            "label": f"Ca2+ {loop['label']}",
-            "start": loop["start"],
-            "end": loop["end"],
-            "length": int(loop["end"]) - int(loop["start"]) + 1,
-            "color": loop.get("color") or ALPHAFOLD_STRUCTURE_COLORS["calcium"],
-            "group": "calcium_binding_region",
-            "description": loop.get("description"),
-        })
-    payload["ranges"] = ranges
-    return clean_json_value(payload)
+    """Curated Ca2+ binding overlay for the structure viewer.
+
+    No calcium annotation is bundled for DHRS7, so this reports unavailable and
+    the viewer omits the track. A gene with curated calcium-binding loops would
+    return {"available": True, ..., "ranges": [...]} here.
+    """
+    del gene_symbol
+    return {"available": False,
+            "reason": "No curated Ca2+ binding annotation is bundled for this gene."}
 
 
 def assign_pdb_secondary_structure(pdb_text: str) -> Dict[str, Any]:
@@ -4333,7 +4181,8 @@ def build_alphafold_structure_ranges(tables: Dict[str, pd.DataFrame]) -> List[Di
                 score=row.get("reference_identity_fraction"),
                 group="annotated_site",
             )
-    for position_spec in ALIGNMENT_BROWSER_REFERENCE_POSITION_LANDMARKS.get("PLA2G4A", ()):
+    for position_spec in ALIGNMENT_BROWSER_REFERENCE_POSITION_LANDMARKS.get(
+            str(active_gene_label()).strip().upper(), ()):
         add_structure_range(
             ranges,
             source="curated_catalytic_residue",
@@ -4418,7 +4267,7 @@ def build_alphafold_structure_payload(outdir: Path,
             "coordinate_source": "AlphaFold Protein Structure Database",
             "viewer_engine": "3Dmol.js",
             "force_field": "none_applied_by_v9_7_viewer",
-            "note": "V9.7 displays the downloaded AlphaFold coordinates and does not run AMBER, CHARMM, OPLS, OpenMM, or molecular-dynamics minimization.",
+            "note": "displays the downloaded AlphaFold coordinates and does not run AMBER, CHARMM, OPLS, OpenMM, or molecular-dynamics minimization.",
         },
         "density_map": {
             "available": False,
@@ -4449,17 +4298,17 @@ def build_report_payload(outdir: Path,
     downloads_df = artifacts_df.copy()
     downloads_df = downloads_df[["artifact_group", "file_type", "relative_path", "size_bytes"]] if not downloads_df.empty else pd.DataFrame(columns=["artifact_group", "file_type", "relative_path", "size_bytes"])
 
-    # V11: load representatives TSV early so it can be folded into html_tables.
-    _v11_reps_for_report = pd.DataFrame()
-    _v11_reps_path = outdir / V11_DEFAULT_REPRESENTATIVE_CSV
-    if _v11_reps_path.exists():
+    # load representatives TSV early so it can be folded into html_tables.
+    _reps_for_report = pd.DataFrame()
+    _reps_path = outdir / DEFAULT_REPRESENTATIVE_CSV
+    if _reps_path.exists():
         try:
-            _v11_reps_for_report = pd.read_csv(_v11_reps_path, sep="\t")
+            _reps_for_report = pd.read_csv(_reps_path, sep="\t")
         except Exception:
-            _v11_reps_for_report = pd.DataFrame()
+            _reps_for_report = pd.DataFrame()
 
-    # V11 motif tables (separate so they can be folded into html_tables).
-    def _v11_safe_read_tsv(path: Path) -> pd.DataFrame:
+    # motif tables (separate so they can be folded into html_tables).
+    def _safe_read_tsv(path: Path) -> pd.DataFrame:
         if not path.exists():
             return pd.DataFrame()
         try:
@@ -4467,7 +4316,7 @@ def build_report_payload(outdir: Path,
         except Exception:
             return pd.DataFrame()
 
-    def _v11_safe_read_csv(path: Path) -> pd.DataFrame:
+    def _safe_read_csv(path: Path) -> pd.DataFrame:
         if not path.exists():
             return pd.DataFrame()
         try:
@@ -4475,16 +4324,16 @@ def build_report_payload(outdir: Path,
         except Exception:
             return pd.DataFrame()
 
-    _v11_motifs_master_for_report = _v11_safe_read_tsv(outdir / V11_MOTIFS_MASTER_TSV)
-    _v11_motif_per_clade_for_report = _v11_safe_read_tsv(outdir / V11_MOTIF_EVOLUTION_PER_CLADE_TSV)
-    _v11_lineage_stab_for_report = _v11_safe_read_csv(outdir / V11_LINEAGE_STABILIZATION_CSV)
+    _motifs_master_for_report = _safe_read_tsv(outdir / MOTIFS_MASTER_TSV)
+    _motif_per_clade_for_report = _safe_read_tsv(outdir / MOTIF_EVOLUTION_PER_CLADE_TSV)
+    _lineage_stab_for_report = _safe_read_csv(outdir / LINEAGE_STABILIZATION_CSV)
     # For the lineage stabilization table we display only the rows where the
     # |score| is non-trivial so the UI is browsable. Keep top 200 by |score|.
-    if not _v11_lineage_stab_for_report.empty:
-        _stab_disp = _v11_lineage_stab_for_report.copy()
+    if not _lineage_stab_for_report.empty:
+        _stab_disp = _lineage_stab_for_report.copy()
         _stab_disp["_abs"] = _stab_disp["stabilization_score"].abs()
         _stab_disp = _stab_disp.sort_values("_abs", ascending=False).drop(columns=["_abs"]).head(200)
-        _v11_lineage_stab_for_report = _stab_disp.reset_index(drop=True)
+        _lineage_stab_for_report = _stab_disp.reset_index(drop=True)
 
     alphafold_structure, alphafold_viewer_js = build_alphafold_structure_payload(
         outdir,
@@ -4516,10 +4365,10 @@ def build_report_payload(outdir: Path,
         "evolutionary_alignment_windows_manifest": dataframe_to_json_records(filter_columns(tables.get("evolutionary_alignment_windows_manifest", pd.DataFrame()), TABLE_DISPLAY_SPECS["evolutionary_alignment_windows_manifest"]["columns"])),
         "pairwise_reports": dataframe_to_json_records(filter_columns(pairwise_df, TABLE_DISPLAY_SPECS["pairwise_reports"]["columns"])),
         "downloads": dataframe_to_json_records(filter_columns(downloads_df, TABLE_DISPLAY_SPECS["downloads"]["columns"])),
-        "v11_representatives": dataframe_to_json_records(filter_columns(_v11_reps_for_report, TABLE_DISPLAY_SPECS["v11_representatives"]["columns"])),
-        "v11_motifs_master": dataframe_to_json_records(filter_columns(_v11_motifs_master_for_report, TABLE_DISPLAY_SPECS["v11_motifs_master"]["columns"])),
-        "v11_motif_evolution_per_clade": dataframe_to_json_records(filter_columns(_v11_motif_per_clade_for_report, TABLE_DISPLAY_SPECS["v11_motif_evolution_per_clade"]["columns"])),
-        "v11_lineage_stabilization": dataframe_to_json_records(filter_columns(_v11_lineage_stab_for_report, TABLE_DISPLAY_SPECS["v11_lineage_stabilization"]["columns"])),
+        "representatives": dataframe_to_json_records(filter_columns(_reps_for_report, TABLE_DISPLAY_SPECS["representatives"]["columns"])),
+        "motifs_master": dataframe_to_json_records(filter_columns(_motifs_master_for_report, TABLE_DISPLAY_SPECS["motifs_master"]["columns"])),
+        "motif_evolution_per_clade": dataframe_to_json_records(filter_columns(_motif_per_clade_for_report, TABLE_DISPLAY_SPECS["motif_evolution_per_clade"]["columns"])),
+        "lineage_stabilization": dataframe_to_json_records(filter_columns(_lineage_stab_for_report, TABLE_DISPLAY_SPECS["lineage_stabilization"]["columns"])),
     }
 
     quick_links = [
@@ -4583,38 +4432,41 @@ def build_report_payload(outdir: Path,
         ("Node conservation extremes", choose_existing_artifact(outdir, [NODE_CONSERVATION_TREE_SVG_FILENAME])),
     ]
 
-    v11_representative_figures = [
-        ("V11 per-clade consolidated summary (consensus SS + mean net charge + domains)", choose_existing_artifact(outdir, [V11_CLADE_CONSOLIDATED_SUMMARY_SVG, V11_CLADE_CONSOLIDATED_SUMMARY_PNG])),
-        ("V11 per-clade identity bubble grid (broad clades)", choose_existing_artifact(outdir, [V11_CLADE_IDENTITY_BUBBLE_SVG, V11_CLADE_IDENTITY_BUBBLE_PNG])),
-        ("V11 per-clade identity bubble grid (subdivided 9-group: Primates / Rodents / OtherMammals split)", choose_existing_artifact(outdir, [V11_GROUPED_CLADE_IDENTITY_BUBBLE_SVG, V11_GROUPED_CLADE_IDENTITY_BUBBLE_PNG])),
-        ("V11 paper-quality phylogeny", choose_existing_artifact(outdir, ["v11_phylo_tree_paper_quality.svg", "v11_phylo_tree_paper_quality.png"])),
-        ("V11 representative net-charge heatmap (Δ vs human)", choose_existing_artifact(outdir, ["v11_representative_net_charge_heatmap.svg", "v11_representative_net_charge_heatmap.png"])),
-        ("V11 representative aromaticity heatmap (Δ vs human)", choose_existing_artifact(outdir, ["v11_representative_aromaticity_heatmap.svg", "v11_representative_aromaticity_heatmap.png"])),
-        ("V11 representative property traces (net-charge & aromaticity)", choose_existing_artifact(outdir, [V11_REPRESENTATIVE_PROPERTY_TRACES_SVG, V11_REPRESENTATIVE_PROPERTY_TRACES_PNG])),
+    representative_figures = [
+        ("per-clade consolidated summary (consensus SS + mean net charge + domains)", choose_existing_artifact(outdir, [CLADE_CONSOLIDATED_SUMMARY_SVG, CLADE_CONSOLIDATED_SUMMARY_PNG])),
+        ("per-clade identity bubble grid (broad clades)", choose_existing_artifact(outdir, [CLADE_IDENTITY_BUBBLE_SVG, CLADE_IDENTITY_BUBBLE_PNG])),
+        ("per-clade identity bubble grid (subdivided 9-group: Primates / Rodents / OtherMammals split)", choose_existing_artifact(outdir, [GROUPED_CLADE_IDENTITY_BUBBLE_SVG, GROUPED_CLADE_IDENTITY_BUBBLE_PNG])),
+        ("paper-quality phylogeny", choose_existing_artifact(outdir, ["phylo_tree_paper_quality.svg", "phylo_tree_paper_quality.png"])),
+        ("representative net-charge heatmap (Δ vs human)", choose_existing_artifact(outdir, ["representative_net_charge_heatmap.svg", "representative_net_charge_heatmap.png"])),
+        ("representative aromaticity heatmap (Δ vs human)", choose_existing_artifact(outdir, ["representative_aromaticity_heatmap.svg", "representative_aromaticity_heatmap.png"])),
+        ("representative property traces (net-charge & aromaticity)", choose_existing_artifact(outdir, [REPRESENTATIVE_PROPERTY_TRACES_SVG, REPRESENTATIVE_PROPERTY_TRACES_PNG])),
     ]
 
-    # V11 motif figure gallery — collect every per-motif logo + species heatmap
+    # motif figure gallery — collect every per-motif logo + species heatmap
     # plus the landscape and annotated alignment SVG. Sorted with user-supplied
     # motifs first (we tag them via filename pattern), then library motifs.
-    v11_motif_figures: List[Tuple[str, Optional[str]]] = []
-    landscape_rel = choose_existing_artifact(outdir, [V11_LINEAGE_STABILIZATION_LANDSCAPE_SVG, V11_LINEAGE_STABILIZATION_LANDSCAPE_PNG])
+    motif_figures: List[Tuple[str, Optional[str]]] = []
+    landscape_rel = choose_existing_artifact(outdir, [LINEAGE_STABILIZATION_LANDSCAPE_SVG, LINEAGE_STABILIZATION_LANDSCAPE_PNG])
     if landscape_rel:
-        v11_motif_figures.append(("V11 lineage-stabilization landscape", landscape_rel))
-    aln_anno_rel = choose_existing_artifact(outdir, [V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG])
+        motif_figures.append(("lineage-stabilization landscape", landscape_rel))
+    aln_anno_rel = choose_existing_artifact(outdir, [ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG])
     if aln_anno_rel:
-        v11_motif_figures.append(("V11 MUSCLE alignment with motif annotations", aln_anno_rel))
+        motif_figures.append(("MUSCLE alignment with motif annotations", aln_anno_rel))
     # Collect per-motif figures from disk. The filename pattern is
-    # v11_motif_<motif_id>_clade_logos.svg and v11_motif_<motif_id>_species_heatmap.svg.
-    motif_logo_files = sorted((outdir.glob("v11_motif_*_clade_logos.svg")), key=lambda p: (0 if "user__" in p.name else 1, p.name))
+    # motif_<motif_id>_clade_logos.svg and motif_<motif_id>_species_heatmap.svg.
+    motif_logo_files = sorted((outdir.glob("motif_*_clade_logos.svg")), key=lambda p: (0 if "user__" in p.name else 1, p.name))
     for path in motif_logo_files:
-        # Pull a human-friendly label out of motif_id.
-        stem = path.stem.replace("v11_motif_", "").replace("_clade_logos", "")
+        # Recover motif_id from the "motif_<id>_clade_logos" stem. Strip only the
+        # leading prefix and trailing suffix -- a global replace would also eat a
+        # "motif_" that occurs inside the id (e.g. an auto-labelled range gives
+        # "user_motif_<start>_<end>"), breaking the heatmap-filename lookup below.
+        stem = path.stem.removeprefix("motif_").removesuffix("_clade_logos")
         is_user = stem.startswith("user__")
         kind = "user-supplied" if is_user else "library"
-        v11_motif_figures.append((f"V11 motif clade logos — {stem} ({kind})", path.name))
-        heat = outdir / f"v11_motif_{stem}_species_heatmap.svg"
+        motif_figures.append((f"motif clade logos — {stem} ({kind})", path.name))
+        heat = outdir / f"motif_{stem}_species_heatmap.svg"
         if heat.exists():
-            v11_motif_figures.append((f"V11 motif representative-species heatmap — {stem} ({kind})", heat.name))
+            motif_figures.append((f"motif representative-species heatmap — {stem} ({kind})", heat.name))
 
     return {
         "title": f"{run_meta.get('gene_symbol') or outdir.name} evolutionary conservation report",
@@ -4629,12 +4481,12 @@ def build_report_payload(outdir: Path,
         "domain_figures": [(label, href) for label, href in domain_figures if href],
         "evolutionary_figures": [(label, href) for label, href in evolutionary_figures if href],
         "clade_figures": [(label, href) for label, href in clade_figures if href],
-        "v11_representative_figures": [(label, href) for label, href in v11_representative_figures if href],
-        "v11_representatives_df": _v11_reps_for_report,
-        "v11_motif_figures": [(label, href) for label, href in v11_motif_figures if href],
-        "v11_structure_overlay_href": choose_existing_artifact(outdir, [V11_STRUCTURE_OVERLAY_HTML]),
-        "v11_grouped_structure_overlay_href": choose_existing_artifact(outdir, [V11_GROUPED_STRUCTURE_OVERLAY_HTML]),
-        # Needed by _v11_overlay_iframe_markup to inline the overlay HTML
+        "representative_figures": [(label, href) for label, href in representative_figures if href],
+        "representatives_df": _reps_for_report,
+        "motif_figures": [(label, href) for label, href in motif_figures if href],
+        "structure_overlay_href": choose_existing_artifact(outdir, [STRUCTURE_OVERLAY_HTML]),
+        "grouped_structure_overlay_href": choose_existing_artifact(outdir, [GROUPED_STRUCTURE_OVERLAY_HTML]),
+        # Needed by _overlay_iframe_markup to inline the overlay HTML
         # into iframe srcdoc so the report stays self-contained when shared.
         "output_directory": str(outdir.resolve()),
     }
@@ -4669,7 +4521,7 @@ def build_alignment_browser_payload(alignment_species_df: pd.DataFrame,
     # the figure without needing the sibling SVG file on disk (lets the
     # user email / zip just interactive_report.html and have it work).
     # Detailed tree gets the same treatment so the "Open detailed SVG" link
-    # is also self-contained.
+    # The export is also self-contained.
     if outdir is not None:
         for path_key, uri_key in (
             ("paper_tree_svg_path", "paper_tree_svg_data_uri"),
@@ -4751,15 +4603,15 @@ def build_alignment_browser_payload(alignment_species_df: pd.DataFrame,
         "alphafold_viewer_js": alphafold_viewer_js,
         # Per-clade 3D structure overlays (3Dmol.js); embedded in the alignment
         # browser alongside the per-residue AlphaFold range viewer.
-        "v11_structure_overlay_href": choose_existing_artifact(outdir, [V11_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
-        "v11_grouped_structure_overlay_href": choose_existing_artifact(outdir, [V11_GROUPED_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
-        "v11_mod_structure_overlay_href": choose_existing_artifact(outdir, [V11_MOD_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
-        "v11_combined_structure_overlay_href": choose_existing_artifact(outdir, [V11_COMBINED_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
-        "v11_clade_identity_bubble_pdf_href": choose_existing_artifact(outdir, [V11_CLADE_IDENTITY_BUBBLE_PDF]) if outdir is not None else None,
-        "v11_grouped_clade_identity_bubble_pdf_href": choose_existing_artifact(outdir, [V11_GROUPED_CLADE_IDENTITY_BUBBLE_PDF]) if outdir is not None else None,
-        "v11_mod_clade_identity_bubble_pdf_href": choose_existing_artifact(outdir, [V11_MOD_CLADE_IDENTITY_BUBBLE_PDF]) if outdir is not None else None,
-        "v11_per_clade_ss_csv_path": (outdir / V11_PER_CLADE_SS_CSV) if (outdir is not None and (outdir / V11_PER_CLADE_SS_CSV).exists()) else None,
-        # Needed by v11_clade_overlay_panel_markup to inline each overlay HTML
+        "structure_overlay_href": choose_existing_artifact(outdir, [STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
+        "grouped_structure_overlay_href": choose_existing_artifact(outdir, [GROUPED_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
+        "mod_structure_overlay_href": choose_existing_artifact(outdir, [MOD_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
+        "combined_structure_overlay_href": choose_existing_artifact(outdir, [COMBINED_STRUCTURE_OVERLAY_HTML]) if outdir is not None else None,
+        "clade_identity_bubble_pdf_href": choose_existing_artifact(outdir, [CLADE_IDENTITY_BUBBLE_PDF]) if outdir is not None else None,
+        "grouped_clade_identity_bubble_pdf_href": choose_existing_artifact(outdir, [GROUPED_CLADE_IDENTITY_BUBBLE_PDF]) if outdir is not None else None,
+        "mod_clade_identity_bubble_pdf_href": choose_existing_artifact(outdir, [MOD_CLADE_IDENTITY_BUBBLE_PDF]) if outdir is not None else None,
+        "per_clade_ss_csv_path": (outdir / PER_CLADE_SS_CSV) if (outdir is not None and (outdir / PER_CLADE_SS_CSV).exists()) else None,
+        # Needed by clade_overlay_panel_markup to inline each overlay HTML
         # into iframe srcdoc so the alignment browser stays self-contained.
         "output_directory": str(outdir.resolve()) if outdir is not None else None,
     }
@@ -5003,12 +4855,9 @@ def build_alignment_browser_architecture_svg(title: str,
         f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
         f'<text class="title" x="{margin}" y="24">{escape(title)}</text>',
         f'<text class="subtitle" x="{margin}" y="41">{escape(subtitle)}</text>',
-        # V11: the specific domain ruler below is PLA2G4A coordinates; only show
-        # it for PLA2G4A. Other genes get a neutral note (domains come from the
-        # gene's own domains.tsv landmarks rendered just below).
-        (f'<text class="subtitle" x="{margin}" y="58">Homo sapiens ruler annotations: PL 1-178, C2 6-122, PLA2c 140-740, PLLLLTP 263-269, DELD 519-522.</text>'
-         if v11_is_pla2g4a() else
-         f'<text class="subtitle" x="{margin}" y="58">Reference ({escape(v11_gene_label())}) domain landmarks below are derived from the gene\'s own UniProt/InterPro annotations.</text>'),
+        # Domain landmarks are read from the gene's own domains.tsv and drawn
+        # just below, so the subtitle only has to say where they came from.
+        f'<text class="subtitle" x="{margin}" y="58">Reference ({escape(active_gene_label())}) domain landmarks below are derived from the gene\'s own UniProt/InterPro annotations.</text>',
     ]
     parts.append(f'<text class="label" x="{margin}" y="{ruler_y + 17}">Reference ruler</text>')
     parts.append(f'<text class="count" x="{count_x}" y="{ruler_y + 17}">1-{track_length}</text>')
@@ -5529,7 +5378,7 @@ def alphafold_structure_panel_markup() -> str:
     return '<section class="alphafold-structure-panel" id="alphafold-structure-panel"></section>'
 
 
-def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
+def per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
     """Render the per-clade consensus secondary structure as an
     alignment-browser-style grid: one row per clade, one cell per reference
     position, cell colour = consensus SS (helix orange, sheet purple, loop
@@ -5537,8 +5386,8 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
     between SS states; bright where ≥80% agree). Empty / missing data render
     as a dim slash.
 
-    Data source: v11_per_clade_secondary_structure.csv produced by
-    v11_compute_per_clade_secondary_structure. If the CSV is missing or empty
+    Data source: per_clade_secondary_structure.csv produced by
+    compute_per_clade_secondary_structure. If the CSV is missing or empty
     returns an empty string so the panel just isn't rendered.
     """
     if not per_clade_ss_csv_path or not Path(per_clade_ss_csv_path).exists():
@@ -5552,7 +5401,7 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
         return ""
 
     # Order clades the same way the bubble grid does (mammals → most basal).
-    clades = sorted(df["clade"].dropna().unique().tolist(), key=_v11_bubble_clade_key)
+    clades = sorted(df["clade"].dropna().unique().tolist(), key=_bubble_clade_key)
     track_len = int(df["reference_position"].max())
     if not clades or track_len <= 0:
         return ""
@@ -5577,7 +5426,7 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
     n_blocks = (track_len + BLOCK - 1) // BLOCK
 
     pieces: List[str] = []
-    pieces.append('<section class="alphafold-structure-panel v11-per-clade-ss-panel" id="v11-per-clade-ss-panel" style="margin-top:14px;">')
+    pieces.append('<section class="alphafold-structure-panel per-clade-ss-panel" id="per-clade-ss-panel" style="margin-top:14px;">')
     pieces.append('<details open><summary style="cursor:pointer;font-weight:700;font-size:0.95rem;">'
                   'Per-clade consensus secondary structure (per reference position)'
                   '</summary>')
@@ -5592,16 +5441,16 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
                   'AlphaFold coverage for this clade at that position.'
                   '</p>')
     pieces.append('<style>'
-                  '.v11-ss-grid{font-family:Consolas,monospace;font-size:10px;line-height:1;border-spacing:0;border-collapse:collapse;}'
-                  '.v11-ss-grid th{padding:2px 6px;text-align:left;color:var(--muted);font-weight:600;font-size:11px;white-space:nowrap;}'
-                  '.v11-ss-grid td.v11-ss-cell{width:11px;height:14px;text-align:center;color:#1a1a1a;}'
-                  '.v11-ss-grid td.v11-ss-cart{padding:0;height:18px;width:11px;background:#fafbfc;}'
-                  '.v11-ss-grid td.v11-ss-cart svg{display:block;width:100%;height:100%;}'
-                  '.v11-ss-grid td.v11-ss-tick{font-size:9px;color:#888;padding-top:2px;}'
-                  '.v11-ss-grid .v11-ss-blockwrap{margin-bottom:14px;overflow-x:auto;}'
+                  '.ss-grid{font-family:Consolas,monospace;font-size:10px;line-height:1;border-spacing:0;border-collapse:collapse;}'
+                  '.ss-grid th{padding:2px 6px;text-align:left;color:var(--muted);font-weight:600;font-size:11px;white-space:nowrap;}'
+                  '.ss-grid td.ss-cell{width:11px;height:14px;text-align:center;color:#1a1a1a;}'
+                  '.ss-grid td.ss-cart{padding:0;height:18px;width:11px;background:#fafbfc;}'
+                  '.ss-grid td.ss-cart svg{display:block;width:100%;height:100%;}'
+                  '.ss-grid td.ss-tick{font-size:9px;color:#888;padding-top:2px;}'
+                  '.ss-grid .ss-blockwrap{margin-bottom:14px;overflow-x:auto;}'
                   '</style>')
 
-    CELL_W = 11  # px; must match .v11-ss-cell CSS width.
+    CELL_W = 11  # px; must match .ss-cell CSS width.
 
     def _build_cartoon_svg(states: List[str]) -> str:
         """Render a cartoon SS strip as inline SVG: helix runs as a coil
@@ -5675,16 +5524,16 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
         start = b * BLOCK + 1
         end = min(track_len, (b + 1) * BLOCK)
         cells_in_block = end - start + 1
-        pieces.append('<div class="v11-ss-blockwrap"><table class="v11-ss-grid"><tbody>')
+        pieces.append('<div class="ss-blockwrap"><table class="ss-grid"><tbody>')
         # Position ticks row.
         pieces.append('<tr><th></th>')
         for pos in range(start, end + 1):
             label = str(pos) if (pos % 10 == 0 or pos == start) else ""
-            pieces.append(f'<td class="v11-ss-tick">{label}</td>')
+            pieces.append(f'<td class="ss-tick">{label}</td>')
         pieces.append('</tr>')
         # One pair of rows per clade: cartoon strip + per-residue letters.
         for clade in clades:
-            color = _v11_clade_color(clade)
+            color = _clade_color(clade)
             # Build per-cell SS state list for the cartoon SVG.
             states: List[str] = []
             for pos in range(start, end + 1):
@@ -5693,14 +5542,14 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
             cartoon_svg = _build_cartoon_svg(states)
             pieces.append(
                 f'<tr><th style="color:{color};" rowspan="2">{escape(clade)}</th>'
-                f'<td class="v11-ss-cart" colspan="{cells_in_block}">{cartoon_svg}</td>'
+                f'<td class="ss-cart" colspan="{cells_in_block}">{cartoon_svg}</td>'
                 f'</tr>'
             )
             pieces.append('<tr>')
             for pos in range(start, end + 1):
                 ent = cell.get((clade, pos))
                 if not ent:
-                    pieces.append('<td class="v11-ss-cell" style="background:#f2f2f4;color:#bcbcc4;">/</td>')
+                    pieces.append('<td class="ss-cell" style="background:#f2f2f4;color:#bcbcc4;">/</td>')
                     continue
                 ss, frac, n = ent
                 bg = SS_COLORS.get(ss, "#b8bec7")
@@ -5713,7 +5562,7 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
                     bgcss = bg
                 title = f"{clade} pos {pos}: {ss} ({int(frac*100)}% of {n} species)"
                 pieces.append(
-                    f'<td class="v11-ss-cell" style="background:{bgcss};" title="{escape(title)}">{letter}</td>'
+                    f'<td class="ss-cell" style="background:{bgcss};" title="{escape(title)}">{letter}</td>'
                 )
             pieces.append('</tr>')
         pieces.append('</tbody></table></div>')
@@ -5722,7 +5571,7 @@ def v11_per_clade_ss_panel_markup(per_clade_ss_csv_path: Optional[Path]) -> str:
     return "".join(pieces)
 
 
-def _v11_html_to_srcdoc(path: Path) -> Optional[str]:
+def _html_to_srcdoc(path: Path) -> Optional[str]:
     """Read an HTML file and return an HTML-attribute-escaped string suitable
     for an `<iframe srcdoc="...">` attribute. Letting the report inline the
     full overlay HTML this way means the parent HTML can be shared on its
@@ -5734,12 +5583,12 @@ def _v11_html_to_srcdoc(path: Path) -> Optional[str]:
     return escape(text, quote=True)
 
 
-def _v11_overlay_iframe_markup(href: Optional[str],
+def _overlay_iframe_markup(href: Optional[str],
                                 outdir: Optional[Any],
                                 title: str,
                                 link_text: str,
                                 margin_top_px: int = 0) -> str:
-    """Render the "Open in new tab" link + embedded iframe for a V11 structure
+    """Render the "Open in new tab" link + embedded iframe for a structure
     overlay. When `outdir` is provided AND the overlay HTML file is readable,
     the iframe uses `srcdoc=` so the parent stays self-contained when shared.
     Otherwise falls back to `src=` (relative path, requires sibling files).
@@ -5758,7 +5607,7 @@ def _v11_overlay_iframe_markup(href: Optional[str],
     srcdoc = None
     if outdir:
         try:
-            srcdoc = _v11_html_to_srcdoc(Path(outdir) / str(href))
+            srcdoc = _html_to_srcdoc(Path(outdir) / str(href))
         except Exception:  # noqa: BLE001
             srcdoc = None
     iframe_attr = (
@@ -5771,7 +5620,7 @@ def _v11_overlay_iframe_markup(href: Optional[str],
     return link_html + iframe_html
 
 
-def v11_clade_overlay_panel_markup(*,
+def clade_overlay_panel_markup(*,
                                    broad_href: Optional[str] = None,
                                    grouped_href: Optional[str] = None,
                                    mod_href: Optional[str] = None,
@@ -5793,7 +5642,7 @@ def v11_clade_overlay_panel_markup(*,
         "border-radius:8px;background:#05070a;"
     )
     pieces: List[str] = []
-    pieces.append('<section class="alphafold-structure-panel v11-clade-overlay-panel" id="v11-clade-overlay-panel">')
+    pieces.append('<section class="alphafold-structure-panel clade-overlay-panel" id="clade-overlay-panel">')
     pieces.append('<details open><summary style="cursor:pointer;font-weight:700;font-size:0.95rem;">'
                   'Per-clade 3D structure overlay (Identity-to-human shaded onto AlphaFold)'
                   '</summary>')
@@ -5812,7 +5661,7 @@ def v11_clade_overlay_panel_markup(*,
         # Falls back to plain `src=` (relative path) when outdir isn't
         # available or the file can't be read.
         combined_srcdoc = (
-            _v11_html_to_srcdoc(Path(outdir) / str(combined_href))
+            _html_to_srcdoc(Path(outdir) / str(combined_href))
             if outdir is not None else None
         )
         pieces.append('<div style="margin-bottom:18px;">')
@@ -5829,14 +5678,14 @@ def v11_clade_overlay_panel_markup(*,
             f'srcdoc="{combined_srcdoc}"' if combined_srcdoc
             else f'src="{escape(str(combined_href))}"'
         )
-        # V11: lazy load + content-visibility so the heavy 3Dmol viewer
+        # lazy load + content-visibility so the heavy 3Dmol viewer
         # doesn't block alignment-browser scroll. The browser defers iframe
         # render until it enters the viewport; `content-visibility:auto`
         # skips paint/layout while off-screen too, keeping the rest of the
         # page snappy on long alignments.
         pieces.append(
             f'<iframe {iframe_attr} loading="lazy" '
-            f'title="V11 structure overlay (combined)" '
+            f'title="structure overlay (combined)" '
             f'style="{iframe_style};content-visibility:auto;contain-intrinsic-size:560px;"></iframe>'
         )
         pieces.append('</div>')
@@ -5888,7 +5737,7 @@ def v11_clade_overlay_panel_markup(*,
         pieces.append('<p style="margin:0 0 6px 0;font-weight:600;font-size:0.88rem;">Broad clades</p>')
         pieces.append(
             f'<iframe src="{escape(str(broad_href))}" '
-            f'title="V11 structure overlay (broad clades)" style="{iframe_style}"></iframe>'
+            f'title="structure overlay (broad clades)" style="{iframe_style}"></iframe>'
         )
         pieces.append('</div>')
     if not combined_href and grouped_href:
@@ -5900,7 +5749,7 @@ def v11_clade_overlay_panel_markup(*,
         )
         pieces.append(
             f'<iframe src="{escape(str(grouped_href))}" '
-            f'title="V11 structure overlay (9-group)" style="{iframe_style}"></iframe>'
+            f'title="structure overlay (9-group)" style="{iframe_style}"></iframe>'
         )
         pieces.append('</div>')
     pieces.append('</details></section>')
@@ -6460,13 +6309,13 @@ def alphafold_structure_script() -> str:
     }
 
     function alphaFoldHelixElement(x1, x2, y, color, cssClass, title, strokeWidth) {
-      // V11 helix renderer. Branches on cssClass:
+      // helix renderer. Branches on cssClass:
       //   * "snapshot-ss-helix": cursive teardrop loops (cubic Bezier per loop
       //     with overshooting control points -> self-cross at the baseline).
       //     Used in the species-snapshot download, where loop shape reads
       //     better than a zigzag at small sizes.
       //   * anything else (architecture / comparative AF SS / stacked lanes
-      //     / inline-styled AF track): V9.7-style compact zigzag polyline.
+      //     / inline-styled AF track): the established compact zigzag polyline.
       //     The label/color-rich architecture row reads cleaner with the
       //     sawtooth than with tall loops crowding the H1..Hn labels.
       const width = Math.max(0.001, x2 - x1);
@@ -6813,7 +6662,7 @@ def alphafold_structure_script() -> str:
               <span class="alphafold-badge"><span class="alphafold-swatch" style="background:${escapeHtml(colors.selected || "#fde047")}"></span>selected run</span>
             </div>
           </div>
-          <div class="alphafold-model-note"><strong>Structure provenance:</strong> this is an AlphaFold predicted coordinate model displayed by 3Dmol.js. V9.7 is not running AMBER, CHARMM, OPLS, or any molecular-mechanics force-field minimization in the viewer; it only maps conservation and residue selections onto the downloaded AlphaFold coordinates.</div>
+          <div class="alphafold-model-note"><strong>Structure provenance:</strong> this is an AlphaFold predicted coordinate model displayed by 3Dmol.js. is not running AMBER, CHARMM, OPLS, or any molecular-mechanics force-field minimization in the viewer; it only maps conservation and residue selections onto the downloaded AlphaFold coordinates.</div>
           <div class="alphafold-grid">
             <div class="alphafold-viewer-card">
               <div class="alphafold-viewer-canvas" id="alphafold-viewer-canvas"></div>
@@ -6910,9 +6759,9 @@ def alphafold_structure_script() -> str:
 """
 
 
-def _v11_umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
+def _umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
     """Static full-protein orthologue-UMAP scatter — the fallback used when the
-    region-selectable JSON (V11_umap_regions.json) is absent.
+    region-selectable JSON (umap_regions.json) is absent.
     Each dot is one species' ortholog placed by its protein-informatic
     feature signature (per-quartile identity to human + composition + catalytic
     integrity + localization score, reduced to 2D). Hovering a dot reveals the
@@ -6920,7 +6769,7 @@ def _v11_umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
     UMAP coordinates, and the key feature values; dots sitting away from their
     clade colour are functional-divergence candidates.
 
-    Data source: V11_orthologue_clusters.csv (from _v11_orthologue_umap.py).
+    Data source: orthologue_clusters.csv (from _orthologue_umap.py).
     Returns '' when the CSV is missing/empty so the panel is simply omitted.
     """
     if not clusters_csv_path or not Path(clusters_csv_path).exists():
@@ -6988,13 +6837,13 @@ def _v11_umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
         prot = str(row.get("protein_id") or sp)
         cx = _sx(float(row["umap_x"]))
         cy = _sy(float(row["umap_y"]))
-        color = _v11_clade_color(clade) if clade else "#888888"
+        color = _clade_color(clade) if clade else "#888888"
         is_spot = sp.lower() in spotlights
         feat_txt = " · ".join(s for s in (_fmt(row, c) for c in feat_cols) if s)
         r = 6.5 if is_spot else 4.2
         sw = 1.6 if is_spot else 0.5
         circles.append(
-            f'<circle class="v11u-dot" cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}" '
+            f'<circle class="umap-dot" cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}" '
             f'fill="{color}" stroke="#1f2937" stroke-width="{sw}" '
             f'data-sp="{_html.escape(sp)}" data-clade="{_html.escape(clade)}" '
             f'data-prot="{_html.escape(prot)}" '
@@ -7002,64 +6851,64 @@ def _v11_umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
             f'data-feat="{_html.escape(feat_txt)}"></circle>'
         )
         if is_spot:
-            labels.append(f'<text class="v11u-splabel" x="{cx + 8:.1f}" '
+            labels.append(f'<text class="umap-splabel" x="{cx + 8:.1f}" '
                           f'y="{cy - 8:.1f}">{_html.escape(sp)}</text>')
 
     counts = df["grouped_clade_9"].astype(str).value_counts().to_dict()
-    legend_order = [c for c in _V11_GROUPED_BUBBLE_CLADE_ORDER if c in counts]
+    legend_order = [c for c in _GROUPED_BUBBLE_CLADE_ORDER if c in counts]
     legend_order += [c for c in counts if c not in legend_order]
     legend_items = "".join(
-        f'<span class="v11u-leg"><span class="v11u-sw" style="background:'
-        f'{_v11_clade_color(c)};"></span>{_html.escape(str(c))} '
-        f'<span class="v11u-cnt">({counts[c]})</span></span>'
+        f'<span class="umap-leg"><span class="umap-sw" style="background:'
+        f'{_clade_color(c)};"></span>{_html.escape(str(c))} '
+        f'<span class="umap-cnt">({counts[c]})</span></span>'
         for c in legend_order
     )
 
     svg = (
-        f'<svg viewBox="0 0 {int(W)} {int(H)}" class="v11u-svg" '
+        f'<svg viewBox="0 0 {int(W)} {int(H)}" class="umap-svg" '
         f'preserveAspectRatio="xMidYMid meet" role="img" '
         f'aria-label="Orthologue UMAP scatter">'
         f'<rect x="0" y="0" width="{int(W)}" height="{int(H)}" fill="#ffffff"/>'
-        f'<text x="{PAD:.0f}" y="{H - 12:.0f}" class="v11u-axis">UMAP dim 1 &#8594;</text>'
-        f'<text x="16" y="{PAD:.0f}" class="v11u-axis" '
+        f'<text x="{PAD:.0f}" y="{H - 12:.0f}" class="umap-axis">UMAP dim 1 &#8594;</text>'
+        f'<text x="16" y="{PAD:.0f}" class="umap-axis" '
         f'transform="rotate(-90 16 {PAD:.0f})">UMAP dim 2 &#8594;</text>'
         + "".join(circles) + "".join(labels) + '</svg>'
     )
 
     css = (
         "<style>"
-        ".v11u-wrap{position:relative;max-width:920px;}"
-        ".v11u-svg{width:100%;height:auto;border:1px solid var(--border,#d8dee6);"
+        ".umap-wrap{position:relative;max-width:920px;}"
+        ".umap-svg{width:100%;height:auto;border:1px solid var(--border,#d8dee6);"
         "border-radius:6px;background:#fff;}"
-        ".v11u-dot{cursor:pointer;}"
-        ".v11u-dot:hover{stroke:#111827;stroke-width:1.8;}"
-        ".v11u-splabel{font:600 11px/1.1 system-ui,'Segoe UI',Arial;fill:#111827;"
+        ".umap-dot{cursor:pointer;}"
+        ".umap-dot:hover{stroke:#111827;stroke-width:1.8;}"
+        ".umap-splabel{font:600 11px/1.1 system-ui,'Segoe UI',Arial;fill:#111827;"
         "paint-order:stroke;stroke:#fff;stroke-width:3px;pointer-events:none;}"
-        ".v11u-axis{font:600 11px/1 system-ui;fill:#6b7280;}"
-        ".v11u-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:0.82rem;}"
-        ".v11u-leg{display:inline-flex;align-items:center;gap:5px;}"
-        ".v11u-sw{display:inline-block;width:11px;height:11px;border:1px solid #c0c4cc;border-radius:2px;}"
-        ".v11u-cnt{color:var(--muted,#888);}"
-        ".v11u-tip{position:absolute;pointer-events:none;z-index:40;max-width:300px;"
+        ".umap-axis{font:600 11px/1 system-ui;fill:#6b7280;}"
+        ".umap-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:0.82rem;}"
+        ".umap-leg{display:inline-flex;align-items:center;gap:5px;}"
+        ".umap-sw{display:inline-block;width:11px;height:11px;border:1px solid #c0c4cc;border-radius:2px;}"
+        ".umap-cnt{color:var(--muted,#888);}"
+        ".umap-tip{position:absolute;pointer-events:none;z-index:40;max-width:300px;"
         "background:#0f172a;color:#f1f5f9;border-radius:6px;padding:8px 10px;font-size:0.8rem;"
         "line-height:1.35;box-shadow:0 4px 14px rgba(15,23,42,.32);}"
-        ".v11u-tip b{color:#fff;}"
-        ".v11u-tfeat{color:#cbd5e1;margin-top:4px;display:block;font-size:0.75rem;}"
+        ".umap-tip b{color:#fff;}"
+        ".umap-tfeat{color:#cbd5e1;margin-top:4px;display:block;font-size:0.75rem;}"
         "</style>"
     )
 
     js = (
         "<script>(function(){"
-        "var panel=document.getElementById('v11-umap-panel');if(!panel)return;"
-        "var svg=panel.querySelector('.v11u-svg'),tip=panel.querySelector('.v11u-tip'),"
-        "wrap=panel.querySelector('.v11u-wrap');if(!svg||!tip||!wrap)return;"
+        "var panel=document.getElementById('umap-panel');if(!panel)return;"
+        "var svg=panel.querySelector('.umap-svg'),tip=panel.querySelector('.umap-tip'),"
+        "wrap=panel.querySelector('.umap-wrap');if(!svg||!tip||!wrap)return;"
         "function show(e){var c=e.target;if(!c||String(c.tagName).toLowerCase()!=='circle')return;"
         "var col=c.getAttribute('fill')||'#888';"
         "tip.innerHTML='<b>'+c.getAttribute('data-sp')+'</b> '"
         "+'<span style=\"font-weight:600;color:'+col+'\">'+c.getAttribute('data-clade')+'</span>'"
         "+'<br>protein: <b>'+c.getAttribute('data-prot')+'</b>'"
         "+'<br><span style=\"color:#94a3b8\">UMAP ('+c.getAttribute('data-x')+', '+c.getAttribute('data-y')+')</span>'"
-        "+'<span class=\"v11u-tfeat\">'+c.getAttribute('data-feat')+'</span>';"
+        "+'<span class=\"umap-tfeat\">'+c.getAttribute('data-feat')+'</span>';"
         "tip.hidden=false;move(e);}"
         "function move(e){var r=wrap.getBoundingClientRect();"
         "var tx=e.clientX-r.left+14,ty=e.clientY-r.top+14,tw=tip.offsetWidth,th=tip.offsetHeight;"
@@ -7074,7 +6923,7 @@ def _v11_umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
     )
 
     return (
-        '<section class="alphafold-structure-panel v11-umap-panel" id="v11-umap-panel" '
+        '<section class="alphafold-structure-panel umap-panel" id="umap-panel" '
         'style="margin-top:14px;">'
         '<details open>'
         '<summary style="cursor:pointer;font-weight:700;font-size:0.95rem;">'
@@ -7091,58 +6940,58 @@ def _v11_umap_panel_static(clusters_csv_path: Optional[Path]) -> str:
         'drawn larger and labelled.'
         '</p>'
         + css +
-        '<div class="v11u-wrap">' + svg +
-        '<div class="v11u-tip" id="v11u-tip" hidden></div></div>'
-        f'<div class="v11u-legend">{legend_items}</div>'
+        '<div class="umap-wrap">' + svg +
+        '<div class="umap-tip" id="umap-tip" hidden></div></div>'
+        f'<div class="umap-legend">{legend_items}</div>'
         '</details></section>'
         + js
     )
 
 
-_V11_UMAP_CSS = (
-    ".v11u-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0;font-size:0.85rem;}"
-    ".v11u-controls select,.v11u-controls input{font:inherit;padding:3px 6px;border:1px solid #cbd5e1;"
+_UMAP_CSS = (
+    ".umap-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0;font-size:0.85rem;}"
+    ".umap-controls select,.umap-controls input{font:inherit;padding:3px 6px;border:1px solid #cbd5e1;"
     "border-radius:4px;background:#fff;color:#0f172a;}"
-    ".v11u-controls input{width:175px;}"
-    ".v11u-controls code{background:#eef2ff;padding:0 3px;border-radius:3px;}"
-    ".v11u-controls button{font:inherit;padding:3px 10px;border:1px solid #2563eb;background:#2563eb;"
+    ".umap-controls input{width:175px;}"
+    ".umap-controls code{background:#eef2ff;padding:0 3px;border-radius:3px;}"
+    ".umap-controls button{font:inherit;padding:3px 10px;border:1px solid #2563eb;background:#2563eb;"
     "color:#fff;border-radius:4px;cursor:pointer;}"
-    ".v11u-controls button:hover{background:#1d4ed8;}"
-    ".v11u-sep{color:#94a3b8;}"
-    ".v11u-status{color:#64748b;font-size:0.78rem;}"
-    ".v11u-wrap{position:relative;max-width:920px;}"
-    ".v11u-svg{width:100%;height:auto;border:1px solid var(--border,#d8dee6);border-radius:6px;background:#fff;}"
-    ".v11u-dot{cursor:pointer;}"
-    ".v11u-dot:hover{stroke:#111827;stroke-width:1.8;}"
-    ".v11u-splabel{font:600 11px/1.1 system-ui,'Segoe UI',Arial;fill:#111827;paint-order:stroke;"
+    ".umap-controls button:hover{background:#1d4ed8;}"
+    ".umap-sep{color:#94a3b8;}"
+    ".umap-status{color:#64748b;font-size:0.78rem;}"
+    ".umap-wrap{position:relative;max-width:920px;}"
+    ".umap-svg{width:100%;height:auto;border:1px solid var(--border,#d8dee6);border-radius:6px;background:#fff;}"
+    ".umap-dot{cursor:pointer;}"
+    ".umap-dot:hover{stroke:#111827;stroke-width:1.8;}"
+    ".umap-splabel{font:600 11px/1.1 system-ui,'Segoe UI',Arial;fill:#111827;paint-order:stroke;"
     "stroke:#fff;stroke-width:3px;pointer-events:none;}"
-    ".v11u-axis{font:600 11px/1 system-ui;fill:#6b7280;}"
-    ".v11u-title{font:600 12px system-ui;fill:#334155;}"
-    ".v11u-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:0.82rem;}"
-    ".v11u-leg{display:inline-flex;align-items:center;gap:5px;}"
-    ".v11u-sw{display:inline-block;width:11px;height:11px;border:1px solid #c0c4cc;border-radius:2px;}"
-    ".v11u-cnt{color:var(--muted,#888);}"
-    ".v11u-tip{position:absolute;pointer-events:none;z-index:40;max-width:300px;background:#0f172a;"
+    ".umap-axis{font:600 11px/1 system-ui;fill:#6b7280;}"
+    ".umap-title{font:600 12px system-ui;fill:#334155;}"
+    ".umap-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:0.82rem;}"
+    ".umap-leg{display:inline-flex;align-items:center;gap:5px;}"
+    ".umap-sw{display:inline-block;width:11px;height:11px;border:1px solid #c0c4cc;border-radius:2px;}"
+    ".umap-cnt{color:var(--muted,#888);}"
+    ".umap-tip{position:absolute;pointer-events:none;z-index:40;max-width:300px;background:#0f172a;"
     "color:#f1f5f9;border-radius:6px;padding:8px 10px;font-size:0.8rem;line-height:1.35;"
     "box-shadow:0 4px 14px rgba(15,23,42,.32);}"
-    ".v11u-tip b{color:#fff;}"
-    ".v11u-tfeat{color:#cbd5e1;margin-top:4px;display:block;font-size:0.75rem;}"
+    ".umap-tip b{color:#fff;}"
+    ".umap-tfeat{color:#cbd5e1;margin-top:4px;display:block;font-size:0.75rem;}"
 )
 
-# Interactive region-selectable scatter. Reads the embedded V11_umap_regions
+# Interactive region-selectable scatter. Reads the embedded umap_regions
 # JSON: precomputed real-UMAP coords per region (dropdown) + per-species residue
 # strings so any custom residue range recomputes a live PCA in-browser.
-_V11_UMAP_JS = r'''<script>(function(){
-  var dEl=document.getElementById('v11u-data'), cEl=document.getElementById('v11u-colors');
+_UMAP_JS = r'''<script>(function(){
+  var dEl=document.getElementById('umap-data'), cEl=document.getElementById('umap-colors');
   if(!dEl||!cEl)return;
   var D=JSON.parse(dEl.textContent), COLORS=JSON.parse(cEl.textContent);
   var SP=D.species, SEQS=D.seqs||[], KD=D.hydropathy||{}, REF=D.ref_length||0, HI=D.human_index||0;
   var GAP={'-':1,'.':1,'X':1,'?':1,' ':1,'*':1};
   var SPOT={homo_sapiens:1,mus_musculus:1,danio_rerio:1};
   var W=880,H=520,PAD=46;
-  var svg=document.getElementById('v11u-svg'), tip=document.getElementById('v11u-tip');
-  var wrap=document.querySelector('#v11-umap-panel .v11u-wrap');
-  var statusEl=document.getElementById('v11u-status');
+  var svg=document.getElementById('umap-svg'), tip=document.getElementById('umap-tip');
+  var wrap=document.querySelector('#umap-panel .umap-wrap');
+  var statusEl=document.getElementById('umap-status');
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m];});}
   function render(points,label){
     var n=points.length; if(!n){svg.innerHTML='';return;}
@@ -7152,16 +7001,16 @@ _V11_UMAP_JS = r'''<script>(function(){
     function sx(x){return PAD+(x-xmin)/(xmax-xmin)*(W-2*PAD);}
     function sy(y){return (H-PAD)-(y-ymin)/(ymax-ymin)*(H-2*PAD);}
     var out=['<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#fff"/>'];
-    out.push('<text x="'+PAD+'" y="'+(H-12)+'" class="v11u-axis">dim 1 →</text>');
-    out.push('<text x="16" y="'+PAD+'" class="v11u-axis" transform="rotate(-90 16 '+PAD+')">dim 2 →</text>');
-    out.push('<text x="'+(W/2)+'" y="20" text-anchor="middle" class="v11u-title">'+esc(label)+'</text>');
+    out.push('<text x="'+PAD+'" y="'+(H-12)+'" class="umap-axis">dim 1 →</text>');
+    out.push('<text x="16" y="'+PAD+'" class="umap-axis" transform="rotate(-90 16 '+PAD+')">dim 2 →</text>');
+    out.push('<text x="'+(W/2)+'" y="20" text-anchor="middle" class="umap-title">'+esc(label)+'</text>');
     var labs=[];
     for(k=0;k<n;k++){
       p=points[k]; var meta=SP[p.i]||{}, sp=meta.species||'', clade=meta.clade||'';
       var col=COLORS[clade]||'#888', spot=SPOT[String(sp).toLowerCase()]?1:0;
       var cx=sx(p.x), cy=sy(p.y);
-      out.push('<circle class="v11u-dot" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+(spot?6.5:4.2)+'" fill="'+col+'" stroke="#1f2937" stroke-width="'+(spot?1.6:0.5)+'" data-i="'+p.i+'" data-rid="'+(p.rid!=null?p.rid:'')+'"></circle>');
-      if(spot)labs.push('<text class="v11u-splabel" x="'+(cx+8).toFixed(1)+'" y="'+(cy-8).toFixed(1)+'">'+esc(sp)+'</text>');
+      out.push('<circle class="umap-dot" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+(spot?6.5:4.2)+'" fill="'+col+'" stroke="#1f2937" stroke-width="'+(spot?1.6:0.5)+'" data-i="'+p.i+'" data-rid="'+(p.rid!=null?p.rid:'')+'"></circle>');
+      if(spot)labs.push('<text class="umap-splabel" x="'+(cx+8).toFixed(1)+'" y="'+(cy-8).toFixed(1)+'">'+esc(sp)+'</text>');
     }
     svg.innerHTML=out.join('')+labs.join(''); svg.setAttribute('data-label',label);
   }
@@ -7172,7 +7021,7 @@ _V11_UMAP_JS = r'''<script>(function(){
     tip.innerHTML='<b>'+esc(meta.species)+'</b> <span style="font-weight:600;color:'+col+'">'+esc(meta.clade)+'</span>'
       +'<br>protein: <b>'+esc(meta.protein_id)+'</b>'
       +'<br><span style="color:#94a3b8">'+esc(label)+'</span>'
-      +((rid!==''&&rid!=null)?'<span class="v11u-tfeat">matches human at '+Math.round(parseFloat(rid)*100)+'% of this region</span>':'');
+      +((rid!==''&&rid!=null)?'<span class="umap-tfeat">matches human at '+Math.round(parseFloat(rid)*100)+'% of this region</span>':'');
     tip.hidden=false; moveTip(e);
   }
   function moveTip(e){var r=wrap.getBoundingClientRect();var tx=e.clientX-r.left+14,ty=e.clientY-r.top+14,tw=tip.offsetWidth,th=tip.offsetHeight;if(tx+tw>r.width)tx=e.clientX-r.left-tw-14;if(ty+th>r.height)ty=Math.max(2,r.height-th-4);tip.style.left=tx+'px';tip.style.top=ty+'px';}
@@ -7231,11 +7080,11 @@ _V11_UMAP_JS = r'''<script>(function(){
     for(i=0;i<n;i++)pts[i]={i:i,x:e1.vec[i]*s1,y:e2.vec[i]*s2b,rid:Math.round(rid[i]*1000)/1000};
     return pts;
   }
-  var regionSel=document.getElementById('v11u-region');
+  var regionSel=document.getElementById('umap-region');
   function drawRegion(idx){var r=D.regions[idx];if(!r)return;render(r.points,r.name+' — '+(r.method||'UMAP'));statusEl.textContent='precomputed '+(r.method||'UMAP')+' · '+r.name;}
   regionSel.addEventListener('change',function(){drawRegion(+regionSel.value);});
-  document.getElementById('v11u-go').addEventListener('click',function(){
-    var cols=parseRanges(document.getElementById('v11u-range').value);
+  document.getElementById('umap-go').addEventListener('click',function(){
+    var cols=parseRanges(document.getElementById('umap-range').value);
     if(cols.length<1){statusEl.textContent='enter residues, e.g. 263-269 or 6-122,228';return;}
     statusEl.textContent='computing live PCA over '+cols.length+' residues…';
     setTimeout(function(){
@@ -7243,37 +7092,37 @@ _V11_UMAP_JS = r'''<script>(function(){
       catch(err){statusEl.textContent='PCA failed: '+err.message;}
     },10);
   });
-  document.getElementById('v11u-range').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('v11u-go').click();}});
+  document.getElementById('umap-range').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('umap-go').click();}});
   drawRegion(0);
 })();</script>'''
 
 
-def v11_umap_panel_markup(outdir: Optional[Path]) -> str:
+def umap_panel_markup(outdir: Optional[Path]) -> str:
     """Orthologue-UMAP panel for the bottom of the alignment browser.
 
     Prefers the region-selectable interactive panel (precomputed real UMAP per
     domain via a dropdown + live client-side PCA for any custom residue range,
-    from V11_umap_regions.json). Falls back to the static full-protein scatter
-    (V11_orthologue_clusters.csv) when the region JSON is absent.
+    from umap_regions.json). Falls back to the static full-protein scatter
+    (orthologue_clusters.csv) when the region JSON is absent.
     """
     if not outdir:
         return ""
     outdir = Path(outdir)
-    regions_json = outdir / "V11_umap_regions.json"
+    regions_json = outdir / "umap_regions.json"
     if regions_json.exists():
         try:
-            panel = _v11_umap_panel_interactive(regions_json)
+            panel = _umap_panel_interactive(regions_json)
             if panel:
                 return panel
         except Exception:  # noqa: BLE001
             pass
-    clusters_csv = outdir / "V11_orthologue_clusters.csv"
+    clusters_csv = outdir / "orthologue_clusters.csv"
     if clusters_csv.exists():
-        return _v11_umap_panel_static(clusters_csv)
+        return _umap_panel_static(clusters_csv)
     return ""
 
 
-def _v11_umap_panel_interactive(regions_json: Path) -> str:
+def _umap_panel_interactive(regions_json: Path) -> str:
     import html as _html
     import json as _json
     raw = regions_json.read_text(encoding="utf-8")
@@ -7291,26 +7140,26 @@ def _v11_umap_panel_interactive(regions_json: Path) -> str:
         counts[c] = counts.get(c, 0) + 1
         if c and c not in clades:
             clades.append(c)
-    clades.sort(key=lambda c: (_V11_GROUPED_BUBBLE_CLADE_ORDER.index(c)
-                               if c in _V11_GROUPED_BUBBLE_CLADE_ORDER else 99))
-    colors = {c: _v11_clade_color(c) for c in clades}
+    clades.sort(key=lambda c: (_GROUPED_BUBBLE_CLADE_ORDER.index(c)
+                               if c in _GROUPED_BUBBLE_CLADE_ORDER else 99))
+    colors = {c: _clade_color(c) for c in clades}
 
     region_options = "".join(
         f'<option value="{i}">{_html.escape(str(r.get("name")))}</option>'
         for i, r in enumerate(regions))
     legend_items = "".join(
-        f'<span class="v11u-leg"><span class="v11u-sw" style="background:{colors[c]};"></span>'
-        f'{_html.escape(c)} <span class="v11u-cnt">({counts.get(c, 0)})</span></span>'
+        f'<span class="umap-leg"><span class="umap-sw" style="background:{colors[c]};"></span>'
+        f'{_html.escape(c)} <span class="umap-cnt">({counts.get(c, 0)})</span></span>'
         for c in clades)
 
     data_script = (
-        '<script id="v11u-data" type="application/json">'
+        '<script id="umap-data" type="application/json">'
         + raw.replace("</", "<\\/") + "</script>"
-        + '<script id="v11u-colors" type="application/json">'
+        + '<script id="umap-colors" type="application/json">'
         + _json.dumps(colors) + "</script>")
 
     return (
-        '<section class="alphafold-structure-panel v11-umap-panel" id="v11-umap-panel" '
+        '<section class="alphafold-structure-panel umap-panel" id="umap-panel" '
         'style="margin-top:14px;">'
         '<details open>'
         '<summary style="cursor:pointer;font-weight:700;font-size:0.95rem;">'
@@ -7324,22 +7173,22 @@ def _v11_umap_panel_interactive(regions_json: Path) -> str:
         'Dots that drift from their clade colour diverge in that region. Hover any dot for its '
         'species, clade, protein accession, and how much of the region matches the human residue.'
         '</p>'
-        "<style>" + _V11_UMAP_CSS + "</style>"
-        '<div class="v11u-controls">'
-        '<label>Region <select id="v11u-region">' + region_options + '</select></label>'
-        '<span class="v11u-sep">or residues</span>'
-        '<input id="v11u-range" type="text" placeholder="263-269 or 6-122,228" '
+        "<style>" + _UMAP_CSS + "</style>"
+        '<div class="umap-controls">'
+        '<label>Region <select id="umap-region">' + region_options + '</select></label>'
+        '<span class="umap-sep">or residues</span>'
+        '<input id="umap-range" type="text" placeholder="263-269 or 6-122,228" '
         'aria-label="custom residue range" />'
-        '<button type="button" id="v11u-go">Draw (live PCA)</button>'
-        '<span id="v11u-status" class="v11u-status"></span>'
+        '<button type="button" id="umap-go">Draw (live PCA)</button>'
+        '<span id="umap-status" class="umap-status"></span>'
         '</div>'
-        '<div class="v11u-wrap">'
-        '<svg id="v11u-svg" class="v11u-svg" viewBox="0 0 880 520" '
+        '<div class="umap-wrap">'
+        '<svg id="umap-svg" class="umap-svg" viewBox="0 0 880 520" '
         'preserveAspectRatio="xMidYMid meet" role="img" aria-label="Orthologue embedding scatter"></svg>'
-        '<div class="v11u-tip" id="v11u-tip" hidden></div></div>'
-        f'<div class="v11u-legend">{legend_items}</div>'
+        '<div class="umap-tip" id="umap-tip" hidden></div></div>'
+        f'<div class="umap-legend">{legend_items}</div>'
         '</details></section>'
-        + data_script + _V11_UMAP_JS
+        + data_script + _UMAP_JS
     )
 
 
@@ -7347,7 +7196,7 @@ def build_alignment_browser_html(payload: Dict[str, Any]) -> str:
     viewer_js = str(payload.get("alphafold_viewer_js") or "")
     payload_for_json = dict(payload)
     payload_for_json.pop("alphafold_viewer_js", None)
-    payload_for_json.pop("v11_per_clade_ss_csv_path", None)  # Path object; not JSON-safe and consumed server-side.
+    payload_for_json.pop("per_clade_ss_csv_path", None)  # Path object; not JSON-safe and consumed server-side.
     payload_json = json.dumps(payload_for_json, ensure_ascii=False).replace("</script>", "<\\/script>")
     viewer_js = viewer_js.replace("</script>", "<\\/script>")
     title = escape(str(payload.get("title") or "Interactive alignment browser"))
@@ -8632,15 +8481,15 @@ __ALPHAFOLD_STRUCTURE_CSS__
     </details>
     <section class="run-architecture-panel" id="run-architecture-panel" hidden></section>
     __ALPHAFOLD_STRUCTURE_PANEL__
-    __V11_PER_CLADE_SS_PANEL__
-    __V11_CLADE_OVERLAY_PANEL__
+    __PER_CLADE_SS_PANEL__
+    __CLADE_OVERLAY_PANEL__
     <section class="snapshot-panel" id="species-snapshot-panel"></section>
     <section class="evolutionary-divergence-panel" id="evolutionary-divergence-panel" hidden></section>
 
     <section class="alignment-shell">
       <div id="alignment-grid" class="alignment-grid"></div>
     </section>
-    __V11_UMAP_PANEL__
+    __UMAP_PANEL__
   </main>
 
   <script id="alignment-payload" type="application/json">__ALIGNMENT_BROWSER_PAYLOAD__</script>
@@ -9773,7 +9622,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
 
     function snapshotSecondaryTraceSvg(row, scope, chunk, gridX, rowTop, cellWidth, ranges) {
       if (!Array.isArray(ranges) || !ranges.length) return "";
-      // V11: SS baseline scaled with the snapshot row (rowTop+8 originally,
+      // SS baseline scaled with the snapshot row (rowTop+8 originally,
       // +12 after the first up-scale, now +18) so the bigger cursive helix loops
       // sit cleanly above the residue cells without crashing into the row above.
       const y = rowTop + 18;
@@ -9855,7 +9704,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
       return SNAPSHOT_RODENT_SPECIES_RE.test(String(row.species || "").toLowerCase());
     }
 
-    // V12: columns where homo_sapiens and danio_rerio carry the IDENTICAL residue
+    // columns where homo_sapiens and danio_rerio carry the IDENTICAL residue
     // but every selected rodent row differs from it -- the "shared in human+fish,
     // diverged in rodents" signature. Only active when human + zebrafish + at
     // least one rodent are among the snapshot rows.
@@ -9880,7 +9729,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
           if (!isInformativeResidue(r) || r === h) return;
         }
         result.columns.add(idx);
-        // V14: sub-flag columns where bos_taurus ALSO carries the shared residue --
+        // sub-flag columns where bos_taurus ALSO carries the shared residue --
         // identical across all three ACTIVE species (human + zebrafish + bovine)
         // while both inactive rodents differ. Candidate activity-linked residues.
         if (result.bovine) {
@@ -9947,7 +9796,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
     };
 
     function inlineSnapshotSvgStyles(svg) {
-      let out = String(svg).replace(/<style>[\s\S]*?<\/style>/, "");
+      let out = String(svg).replace(/<style>[\\s\\S]*?<\\/style>/, "");
       out = out.replace(/ class="([^"]+)"/g, function (m, cls) {
         const attrs = SNAPSHOT_SVG_STYLE_ATTRS[cls];
         return attrs ? " " + attrs : "";
@@ -9975,7 +9824,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
       for (let start = 0; start < columns.length; start += residuesPerLine) {
         chunks.push(columns.slice(start, start + residuesPerLine));
       }
-      // V11 snapshot panel sized up again ~45% (was 22/32/56 grid + 14px AA font).
+      // snapshot panel sized up again ~45% (was 22/32/56 grid + 14px AA font).
       const margin = 36;
       const legendWidth = 480;
       const legendGap = 44;
@@ -10106,7 +9955,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
             parts.push(`<rect class="snapshot-hd-frame" x="${x}" y="${frameTop}" width="${cellWidth}" height="${frameHeight}"><title>${escapeXml(tip)}</title></rect>`);
             parts.push(`<rect class="snapshot-hd-tab" x="${x}" y="${(frameTop + frameHeight + 5).toFixed(1)}" width="${cellWidth}" height="9"><title>${escapeXml(tip)}</title></rect>`);
             if (trio) {
-              // V14: red asterisk sitting on the black tab but lifted up a little
+              // red asterisk sitting on the black tab but lifted up a little
               // into the bottom of the sequence row (offset above the bar centre,
               // not centred). These columns are identical across all three ACTIVE
               // species (human + zebrafish + bovine) while both inactive rodents
@@ -11130,7 +10979,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
     function comparativeAlphaFoldProteinId(entry) {
       if (!entry) return "";
       const recordId = String(entry.record_id || "");
-      const proteinMatch = recordId.match(/(?:^|\|)Protein=([^|]+)/);
+      const proteinMatch = recordId.match(/(?:^|\\|)Protein=([^|]+)/);
       if (proteinMatch && proteinMatch[1]) return proteinMatch[1];
       const proteinRecord = String(entry.protein_record_id || "").trim();
       if (proteinRecord.includes("__")) return proteinRecord.split("__").pop();
@@ -12105,19 +11954,19 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
     # Passing `outdir` lets the panel builder inline each viewer HTML via
     # iframe `srcdoc` so the alignment browser stays self-contained when
     # shared without sibling files.
-    overlay_panel = v11_clade_overlay_panel_markup(
-        broad_href=payload.get("v11_structure_overlay_href"),
-        grouped_href=payload.get("v11_grouped_structure_overlay_href"),
-        mod_href=payload.get("v11_mod_structure_overlay_href"),
-        combined_href=payload.get("v11_combined_structure_overlay_href"),
-        bubble_pdf_href=payload.get("v11_clade_identity_bubble_pdf_href"),
-        grouped_bubble_pdf_href=payload.get("v11_grouped_clade_identity_bubble_pdf_href"),
-        mod_bubble_pdf_href=payload.get("v11_mod_clade_identity_bubble_pdf_href"),
+    overlay_panel = clade_overlay_panel_markup(
+        broad_href=payload.get("structure_overlay_href"),
+        grouped_href=payload.get("grouped_structure_overlay_href"),
+        mod_href=payload.get("mod_structure_overlay_href"),
+        combined_href=payload.get("combined_structure_overlay_href"),
+        bubble_pdf_href=payload.get("clade_identity_bubble_pdf_href"),
+        grouped_bubble_pdf_href=payload.get("grouped_clade_identity_bubble_pdf_href"),
+        mod_bubble_pdf_href=payload.get("mod_clade_identity_bubble_pdf_href"),
         outdir=Path(payload.get("output_directory")) if payload.get("output_directory") else None,
     )
-    per_clade_ss_panel = v11_per_clade_ss_panel_markup(payload.get("v11_per_clade_ss_csv_path"))
+    per_clade_ss_panel = per_clade_ss_panel_markup(payload.get("per_clade_ss_csv_path"))
     _umap_outdir = payload.get("output_directory")
-    umap_panel = v11_umap_panel_markup(Path(_umap_outdir)) if _umap_outdir else ""
+    umap_panel = umap_panel_markup(Path(_umap_outdir)) if _umap_outdir else ""
     rendered = (
         html_template
         .replace("__ALIGNMENT_BROWSER_TITLE__", title)
@@ -12125,9 +11974,9 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
         .replace("__ALPHAFOLD_VIEWER_JS__", viewer_js)
         .replace("__ALPHAFOLD_STRUCTURE_CSS__", alphafold_structure_css())
         .replace("__ALPHAFOLD_STRUCTURE_PANEL__", alphafold_structure_panel_markup())
-        .replace("__V11_PER_CLADE_SS_PANEL__", per_clade_ss_panel)
-        .replace("__V11_CLADE_OVERLAY_PANEL__", overlay_panel)
-        .replace("__V11_UMAP_PANEL__", umap_panel)
+        .replace("__PER_CLADE_SS_PANEL__", per_clade_ss_panel)
+        .replace("__CLADE_OVERLAY_PANEL__", overlay_panel)
+        .replace("__UMAP_PANEL__", umap_panel)
         .replace("__ALPHAFOLD_STRUCTURE_SCRIPT__", alphafold_structure_script())
     )
     # Post-process: inline any locally-referenced SVG/PNG/JPG artefacts as
@@ -12136,7 +11985,7 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
     outdir_str = payload.get("output_directory")
     if outdir_str:
         try:
-            rendered = _v11_inline_local_artifacts(rendered, Path(outdir_str))
+            rendered = _inline_local_artifacts(rendered, Path(outdir_str))
         except Exception:  # noqa: BLE001
             pass
     return rendered
@@ -12207,8 +12056,8 @@ def render_table_section(table_key: str, title: str, description: str) -> str:
 
 
 def build_interactive_report_html(payload: Dict[str, Any]) -> str:
-    # V11: make gene-dependent labels resolve to the actual gene symbol.
-    v11_set_active_gene(str((payload.get("meta") or {}).get("gene_symbol") or ""))
+    # make gene-dependent labels resolve to the actual gene symbol.
+    set_active_gene(str((payload.get("meta") or {}).get("gene_symbol") or ""))
     viewer_js = str(payload.get("alphafold_viewer_js") or "").replace("</script>", "<\\/script>")
     report_tables_json = json.dumps(payload["tables"], ensure_ascii=False).replace("</script>", "<\\/script>")
     table_configs_json = json.dumps(payload["table_configs"], ensure_ascii=False).replace("</script>", "<\\/script>")
@@ -12501,7 +12350,7 @@ __ALPHAFOLD_STRUCTURE_CSS__
     <section class="hero">
       <h1>__REPORT_TITLE__</h1>
       <p>
-        Offline summary-and-drilldown report for the current V9.7 run. Large alignment matrices stay file-backed,
+        Offline summary-and-drilldown report for the current run. Large alignment matrices stay file-backed,
         while the key tables, clade summaries, pairwise-vs-reference metrics, and figure links are available directly in this page.
       </p>
       __SUMMARY_CARDS__
@@ -12521,7 +12370,7 @@ __ALPHAFOLD_STRUCTURE_CSS__
       <button class="tab-button" data-tab-target="conservation">Conservation</button>
       <button class="tab-button" data-tab-target="domains">Domains &amp; Sites</button>
       <button class="tab-button" data-tab-target="clade">Clade Analysis</button>
-      <button class="tab-button" data-tab-target="v11-representatives">V11 Representatives</button>
+      <button class="tab-button" data-tab-target="representatives">Representatives</button>
       <button class="tab-button" data-tab-target="pairwise">Pairwise vs Human</button>
       <button class="tab-button" data-tab-target="downloads">Downloads</button>
     </div>
@@ -12605,24 +12454,24 @@ __ALPHAFOLD_STRUCTURE_CSS__
       </div>
     </section>
 
-    <section class="tab-panel" id="tab-v11-representatives">
+    <section class="tab-panel" id="tab-representatives">
       <div class="panel-grid">
         <div class="section-card" style="padding: 16px;">
-          <h2>V11 — Representative comparison vs human</h2>
+          <h2>— Representative comparison vs human</h2>
           <p class="muted">
-            V11 picks the most-conserved species per broad clade (highest mean identity to the human reference)
+            picks the most-conserved species per broad clade (highest mean identity to the human reference)
             and always retains <em>danio rerio</em> for experimental convenience. The tracks below compare
             net-charge (pH 7.4 model) and local aromaticity (5-residue centered window) of each representative
             against the human reference, alongside the focused secondary-structure view.
           </p>
         </div>
         <div class="section-card" style="padding: 16px;">
-          <h2>V11 Figures</h2>
-          __V11_REPRESENTATIVE_FIGURES__
+          <h2>Figures</h2>
+          __REPRESENTATIVE_FIGURES__
         </div>
-        __TABLE_V11_REPRESENTATIVES__
+        __TABLE_REPRESENTATIVES__
         <div class="section-card" style="padding: 16px;">
-          <h2>V11 — Motif evolution &amp; lineage stabilization</h2>
+          <h2>— Motif evolution &amp; lineage stabilization</h2>
           <p class="muted">
             Per-clade Shannon entropy and Jensen-Shannon divergence (Capra &amp; Singh, 2007) per reference position;
             stabilization score = H<sub>ancestral</sub> − H<sub>derived</sub>, a simplified entropy-based approximation
@@ -12635,30 +12484,30 @@ __ALPHAFOLD_STRUCTURE_CSS__
         </div>
         <div class="section-card" style="padding: 16px;">
           <h2>Motif &amp; stabilization figures</h2>
-          __V11_MOTIF_FIGURES__
+          __MOTIF_FIGURES__
         </div>
-        __TABLE_V11_MOTIFS_MASTER__
-        __TABLE_V11_MOTIF_EVOLUTION_PER_CLADE__
-        __TABLE_V11_LINEAGE_STABILIZATION__
+        __TABLE_MOTIFS_MASTER__
+        __TABLE_MOTIF_EVOLUTION_PER_CLADE__
+        __TABLE_LINEAGE_STABILIZATION__
         <div class="section-card" style="padding: 16px;">
-          <h2>V11 — Interactive 3D structure overlay</h2>
+          <h2>— Interactive 3D structure overlay</h2>
           <p class="muted">
             Per-clade identity-to-human painted onto the reference AlphaFold model (3Dmol.js). Pick a clade from the
             Overlay menu to shade secondary structure by how conserved each residue is in that clade; switch palettes,
             visual modes, surface, and (for genes with a known active site) the pocket guide. Opens in its own tab for
             full-screen use.
           </p>
-          __V11_STRUCTURE_OVERLAY_LINK__
+          __STRUCTURE_OVERLAY_LINK__
         </div>
         <div class="section-card" style="padding: 16px;">
-          <h2>V11 — Region-selectable ortholog UMAP</h2>
+          <h2>— Region-selectable ortholog UMAP</h2>
           <p class="muted">
             Interactive embedding of every species' ortholog. Choose a domain to load its precomputed real UMAP, or
             type residues (e.g. <code>263-269</code> or <code>6-122,228</code>) to recompute a live PCA over just
             those positions across all species. Hover any dot for its species, clade, protein accession and how much
             of the region matches the human residue. (Mirrors the panel at the bottom of the standalone alignment browser.)
           </p>
-          __V11_UMAP_INTERACTIVE__
+          __UMAP_INTERACTIVE__
         </div>
       </div>
     </section>
@@ -12882,42 +12731,42 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
         "__TABLE_CLADE_DIFFERENCE_FROM_GLOBAL__": render_table_section("clade_difference_from_global", "Clade-vs-global differences", "Per-position departures from the global identity profile."),
         "__TABLE_CLADE_FOURIER_REGIONS__": render_table_section("clade_fourier_regions", "Clade Fourier regions", "FFT-smoothed conserved and divergent clade windows."),
         "__TABLE_DOMAIN_CLADE_CONSERVATION_SUMMARY__": render_table_section("domain_clade_conservation_summary", "Domain-by-clade summary", "Domain-level conservation statistics split by clade."),
-        "__TABLE_NODE_CONSERVATION_EXTREMES__": render_table_section("node_conservation_extremes", "Node conservation extremes", f"Most and least human-reference-conserved {v11_gene_label()} orthologues per named vertebrate node; human query excluded."),
+        "__TABLE_NODE_CONSERVATION_EXTREMES__": render_table_section("node_conservation_extremes", "Node conservation extremes", f"Most and least human-reference-conserved {active_gene_label()} orthologues per named vertebrate node; human query excluded."),
         "__TABLE_EVOLUTIONARY_SEGMENT_METRICS__": render_table_section("evolutionary_segment_metrics", "Per-clade segment metrics", "Mean identity, BLOSUM-positive similarity, and polarity agreement for each human segment across the clade bins used for the divergence bar figure."),
         "__TABLE_PAIRWISE_REPORTS__": render_table_section("pairwise_reports", "Pairwise vs reference", "Searchable summary of the pairwise human/reference report bundle."),
         "__TABLE_DOWNLOADS__": render_table_section("downloads", "Artifact manifest", "Direct links to raw CSV/TSV/FASTA/tree/PDF/SVG/PNG outputs."),
-        "__V11_REPRESENTATIVE_FIGURES__": render_figure_gallery(payload.get("v11_representative_figures") or [], wide=True),
-        "__TABLE_V11_REPRESENTATIVES__": render_table_section("v11_representatives", "V11 clade representatives", "Most-conserved species per broad clade (highest mean identity to human reference). Mandatory inclusions: homo_sapiens, danio_rerio."),
-        "__V11_MOTIF_FIGURES__": render_figure_gallery(payload.get("v11_motif_figures") or [], wide=True),
-        "__TABLE_V11_MOTIFS_MASTER__": render_table_section("v11_motifs_master", "V11 motifs (user + library)", "All motif ranges investigated by V11: user-supplied via --annotated_motifs (source=user) and curated regex-library hits in the human reference (source=library). No function is assumed for any label."),
-        "__TABLE_V11_MOTIF_EVOLUTION_PER_CLADE__": render_table_section("v11_motif_evolution_per_clade", "V11 motif evolution by clade", "For each motif × broad-clade pair: consensus motif inside that clade, fraction of clade members matching the human reference motif, and dominant alternative."),
-        "__TABLE_V11_LINEAGE_STABILIZATION__": render_table_section("v11_lineage_stabilization", "V11 lineage stabilization (top 200 |score|)", "Stabilization score = H_ancestral − H_derived per reference position. Positive = position is more variable in ancestral clades and fixed in derived clades (Gu-style Type I divergence approximation)."),
-        "__V11_STRUCTURE_OVERLAY_LINK__": (
+        "__REPRESENTATIVE_FIGURES__": render_figure_gallery(payload.get("representative_figures") or [], wide=True),
+        "__TABLE_REPRESENTATIVES__": render_table_section("representatives", "clade representatives", "Most-conserved species per broad clade (highest mean identity to human reference). Mandatory inclusions: homo_sapiens, danio_rerio."),
+        "__MOTIF_FIGURES__": render_figure_gallery(payload.get("motif_figures") or [], wide=True),
+        "__TABLE_MOTIFS_MASTER__": render_table_section("motifs_master", "motifs (user + library)", "All motif ranges investigated by user-supplied via --annotated_motifs (source=user) and curated regex-library hits in the human reference (source=library). No function is assumed for any label."),
+        "__TABLE_MOTIF_EVOLUTION_PER_CLADE__": render_table_section("motif_evolution_per_clade", "motif evolution by clade", "For each motif × broad-clade pair: consensus motif inside that clade, fraction of clade members matching the human reference motif, and dominant alternative."),
+        "__TABLE_LINEAGE_STABILIZATION__": render_table_section("lineage_stabilization", "lineage stabilization (top 200 |score|)", "Stabilization score = H_ancestral − H_derived per reference position. Positive = position is more variable in ancestral clades and fixed in derived clades (Gu-style Type I divergence approximation)."),
+        "__STRUCTURE_OVERLAY_LINK__": (
             (
                 # Broad-clade viewer (13 vertebrate clades). Inline the full
                 # overlay HTML into the iframe via srcdoc so the report
                 # stays self-contained when shared without sibling files.
-                _v11_overlay_iframe_markup(
-                    payload.get("v11_structure_overlay_href"),
+                _overlay_iframe_markup(
+                    payload.get("structure_overlay_href"),
                     payload.get("output_directory"),
-                    "V11 structure overlay (broad clades)",
+                    "structure overlay (broad clades)",
                     "Open interactive 3D structure overlay &mdash; broad clades &#8599;",
                 )
                 +
                 # Subdivided 9-group viewer (Primates/Rodents/OtherMammals split, etc.).
-                _v11_overlay_iframe_markup(
-                    payload.get("v11_grouped_structure_overlay_href"),
+                _overlay_iframe_markup(
+                    payload.get("grouped_structure_overlay_href"),
                     payload.get("output_directory"),
-                    "V11 structure overlay (9 groups)",
+                    "structure overlay (9 groups)",
                     "Open interactive 3D structure overlay &mdash; subdivided 9-group (Primates / Rodents / OtherMammals split) &#8599;",
                     margin_top_px=24,
                 )
             )
-            if (payload.get("v11_structure_overlay_href") or payload.get("v11_grouped_structure_overlay_href"))
+            if (payload.get("structure_overlay_href") or payload.get("grouped_structure_overlay_href"))
             else '<p class="muted">Structure overlay not available (requires the human reference AlphaFold model).</p>'
         ),
-        "__V11_UMAP_INTERACTIVE__": (
-            v11_umap_panel_markup(Path(payload["output_directory"]))
+        "__UMAP_INTERACTIVE__": (
+            umap_panel_markup(Path(payload["output_directory"]))
             if payload.get("output_directory")
             else '<p class="muted">Region-selectable UMAP not available (region JSON missing).</p>'
         ),
@@ -12939,17 +12788,17 @@ __ALPHAFOLD_STRUCTURE_SCRIPT__
     outdir_str = payload.get("output_directory")
     if outdir_str:
         try:
-            html_template = _v11_inline_local_artifacts(html_template, Path(outdir_str))
+            html_template = _inline_local_artifacts(html_template, Path(outdir_str))
         except Exception:  # noqa: BLE001
             pass
     return html_template
 
 
-_V11_INLINE_ARTIFACT_REGEX = re.compile(
+_INLINE_ARTIFACT_REGEX = re.compile(
     r'\b(src|href)="([^"#?][^"#?]*?\.(svg|png|jpe?g|pdf))"',
     re.IGNORECASE,
 )
-_V11_INLINE_ARTIFACT_MIME = {
+_INLINE_ARTIFACT_MIME = {
     "svg": "image/svg+xml",
     "png": "image/png",
     "jpg": "image/jpeg",
@@ -12961,7 +12810,7 @@ _V11_INLINE_ARTIFACT_MIME = {
 # embedded in a shareable report. SVG/PNG cap is tighter so giant composite
 # figures (full-alignment architecture SVGs ~5 MB) stay as relative links
 # rather than ballooning the HTML 10×.
-_V11_INLINE_ARTIFACT_CAP_MB = {
+_INLINE_ARTIFACT_CAP_MB = {
     "svg": 0.5,
     "png": 0.5,
     "jpg": 0.5,
@@ -12970,11 +12819,11 @@ _V11_INLINE_ARTIFACT_CAP_MB = {
 }
 
 
-def _v11_inline_local_artifacts(html: str, outdir: Path) -> str:
+def _inline_local_artifacts(html: str, outdir: Path) -> str:
     """Walk every src=/href= attribute that points to a relative
     .svg/.png/.jpg/.pdf file in `outdir`, read the file, and replace the
     attribute with a base64 data URI. Per-extension size caps live in
-    `_V11_INLINE_ARTIFACT_CAP_MB` (SVG/PNG 0.5 MB, PDF 1.5 MB). Skips data
+    `_INLINE_ARTIFACT_CAP_MB` (SVG/PNG 0.5 MB, PDF 1.5 MB). Skips data
     URIs, absolute URLs, and oversized files so the report stays send-able
     without ballooning.
 
@@ -12982,7 +12831,7 @@ def _v11_inline_local_artifacts(html: str, outdir: Path) -> str:
     pointing at the same path on subsequent matches via a cache, so an
     `<a href="paper_tree.svg"><img src="paper_tree.svg"></a>` pair both get
     the inline URI in one pass — including the case of a PDF link clicked
-    via `<a href="v11_clade_identity_bubble_9group.pdf">`.
+    via `<a href="clade_identity_bubble_9group.pdf">`.
     """
     cache: Dict[str, Optional[str]] = {}
 
@@ -12997,7 +12846,7 @@ def _v11_inline_local_artifacts(html: str, outdir: Path) -> str:
             if not target.is_file():
                 cache[path_rel] = None
                 return match.group(0)
-            cap_mb = _V11_INLINE_ARTIFACT_CAP_MB.get(ext, 0.5)
+            cap_mb = _INLINE_ARTIFACT_CAP_MB.get(ext, 0.5)
             if target.stat().st_size > int(cap_mb * 1024 * 1024):
                 cache[path_rel] = None
                 return match.group(0)
@@ -13006,7 +12855,7 @@ def _v11_inline_local_artifacts(html: str, outdir: Path) -> str:
             except OSError:
                 cache[path_rel] = None
                 return match.group(0)
-            mime = _V11_INLINE_ARTIFACT_MIME.get(ext, "application/octet-stream")
+            mime = _INLINE_ARTIFACT_MIME.get(ext, "application/octet-stream")
             uri = f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
             cache[path_rel] = uri
         if uri is None:
@@ -13024,7 +12873,7 @@ def _v11_inline_local_artifacts(html: str, outdir: Path) -> str:
             return f'{attr}="{uri}" download="{escape(filename)}"'
         return f'{attr}="{uri}"'
 
-    return _V11_INLINE_ARTIFACT_REGEX.sub(repl, html)
+    return _INLINE_ARTIFACT_REGEX.sub(repl, html)
 
 
 def quote_ident(identifier: str) -> str:
@@ -13230,8 +13079,8 @@ def export_output_archive(outdir: Path | str,
     )
     loaded_tables["node_conservation_extremes"] = node_conservation_df
     _archive_gene_symbol = parse_run_summary_metadata(outdir_path / "run_summary.txt").get("Gene")
-    # V11: make any figure/HTML rebuilt here label itself with the real gene.
-    v11_set_active_gene(_archive_gene_symbol)
+    # make any figure/HTML rebuilt here label itself with the real gene.
+    set_active_gene(_archive_gene_symbol)
     preliminary_meta = {
         "run_key": run_key,
         "output_directory": str(outdir_path),
@@ -13354,49 +13203,49 @@ def export_output_archive(outdir: Path | str,
 
 
 # =============================================================================
-# V11 additions: per-species net-charge & aromaticity tracks, clade-
+# additions: per-species net-charge & aromaticity tracks, clade-
 # representative selection, focused comparative views vs. human reference.
 # =============================================================================
 
 # Residue → net charge at physiological pH 7.4. Histidine partially protonated
 # (pKa ~6.0 ⇒ ~10% protonated at pH 7.4). Cysteine ignored (pKa ~8.3, only
 # partially deprotonated, usually treated as neutral for net-charge tracks).
-V11_RESIDUE_NET_CHARGE_PH74: Dict[str, float] = {
+RESIDUE_NET_CHARGE_PH74: Dict[str, float] = {
     "K": 1.0, "R": 1.0, "H": 0.1,
     "D": -1.0, "E": -1.0,
 }
 
 # Aromatic residue indicator (F, W, Y). Histidine has aromatic character but
-# is canonically excluded from "aromatic" property tracks in protein analyses.
-V11_RESIDUE_AROMATICITY: Dict[str, float] = {"F": 1.0, "W": 1.0, "Y": 1.0}
+# Histidine is canonically excluded from "aromatic" property tracks.
+RESIDUE_AROMATICITY: Dict[str, float] = {"F": 1.0, "W": 1.0, "Y": 1.0}
 
 # Default sliding-window width for the smoothed property tracks (residues).
-V11_DEFAULT_PROPERTY_WINDOW = 5
+DEFAULT_PROPERTY_WINDOW = 5
 
-# Species that V11 always retains in the focused comparative view even if
+# Species that always retains in the focused comparative view even if
 # they would not otherwise be picked as the most-conserved representative.
-V11_MANDATORY_FOCUS_SPECIES: Tuple[str, ...] = ("homo_sapiens", "danio_rerio")
+MANDATORY_FOCUS_SPECIES: Tuple[str, ...] = ("homo_sapiens", "danio_rerio")
 
-V11_DEFAULT_REPRESENTATIVE_CSV = "v11_clade_representatives.tsv"
-V11_NET_CHARGE_PER_SPECIES_CSV = "v11_net_charge_per_species.csv"
-V11_AROMATICITY_PER_SPECIES_CSV = "v11_aromaticity_per_species.csv"
-V11_NET_CHARGE_DELTA_CSV = "v11_net_charge_delta_vs_human.csv"
-V11_AROMATICITY_DELTA_CSV = "v11_aromaticity_delta_vs_human.csv"
-V11_REPRESENTATIVE_PROPERTY_HEATMAP_PNG = "v11_representative_property_heatmap.png"
-V11_REPRESENTATIVE_PROPERTY_HEATMAP_SVG = "v11_representative_property_heatmap.svg"
-V11_REPRESENTATIVE_PROPERTY_TRACES_PNG = "v11_representative_property_traces.png"
-V11_REPRESENTATIVE_PROPERTY_TRACES_SVG = "v11_representative_property_traces.svg"
-V11_REPRESENTATIVE_SS_BUNDLE_JSON = "v11_representative_secondary_structure.json"
+DEFAULT_REPRESENTATIVE_CSV = "clade_representatives.tsv"
+NET_CHARGE_PER_SPECIES_CSV = "net_charge_per_species.csv"
+AROMATICITY_PER_SPECIES_CSV = "aromaticity_per_species.csv"
+NET_CHARGE_DELTA_CSV = "net_charge_delta_vs_human.csv"
+AROMATICITY_DELTA_CSV = "aromaticity_delta_vs_human.csv"
+REPRESENTATIVE_PROPERTY_HEATMAP_PNG = "representative_property_heatmap.png"
+REPRESENTATIVE_PROPERTY_HEATMAP_SVG = "representative_property_heatmap.svg"
+REPRESENTATIVE_PROPERTY_TRACES_PNG = "representative_property_traces.png"
+REPRESENTATIVE_PROPERTY_TRACES_SVG = "representative_property_traces.svg"
+REPRESENTATIVE_SS_BUNDLE_JSON = "representative_secondary_structure.json"
 
 
-def _v11_residue_value(aa: str, table: Dict[str, float]) -> float:
+def _residue_value(aa: str, table: Dict[str, float]) -> float:
     """Return the property value of a single residue. Gaps/unknowns → 0."""
     if not aa:
         return 0.0
     return float(table.get(str(aa).upper(), 0.0))
 
 
-def _v11_centered_window_mean(values: Sequence[float], window: int) -> List[float]:
+def _centered_window_mean(values: Sequence[float], window: int) -> List[float]:
     """Centered sliding-window mean. window must be >= 1; we use mean of the
     [i - window//2 .. i + window//2] slice clipped to array bounds."""
     if window <= 1 or not values:
@@ -13413,10 +13262,10 @@ def _v11_centered_window_mean(values: Sequence[float], window: int) -> List[floa
     return out.tolist()
 
 
-def v11_compute_per_species_property_track(alignment: Any,
+def compute_per_species_property_track(alignment: Any,
                                            residue_property_map: Dict[str, float],
                                            reference_species: str,
-                                           smoothing_window: int = V11_DEFAULT_PROPERTY_WINDOW) -> pd.DataFrame:
+                                           smoothing_window: int = DEFAULT_PROPERTY_WINDOW) -> pd.DataFrame:
     """For a reference-projected alignment, return one row per species with
     the smoothed property value at every reference (ungapped) column.
 
@@ -13457,10 +13306,10 @@ def v11_compute_per_species_property_track(alignment: Any,
         species, symbol = parse_header_species_symbol(record.id)
         seq_str = str(record.seq).upper()
         raw = [
-            _v11_residue_value(seq_str[idx], residue_property_map) if idx < len(seq_str) else 0.0
+            _residue_value(seq_str[idx], residue_property_map) if idx < len(seq_str) else 0.0
             for idx in keep_cols
         ]
-        smoothed = _v11_centered_window_mean(raw, smoothing_window)
+        smoothed = _centered_window_mean(raw, smoothing_window)
         row: Dict[str, Any] = {
             "species": species,
             "protein_label": symbol,
@@ -13479,7 +13328,7 @@ def v11_compute_per_species_property_track(alignment: Any,
     return df
 
 
-def v11_compute_identity_to_reference(alignment: Any, reference_species: str) -> pd.DataFrame:
+def compute_identity_to_reference(alignment: Any, reference_species: str) -> pd.DataFrame:
     """Return per-species mean identity to the reference across overlapping
     (both non-gap) columns. Frame columns: species, protein_label, record_id,
     overlapping_positions, identical_positions, mean_identity."""
@@ -13520,7 +13369,7 @@ def v11_compute_identity_to_reference(alignment: Any, reference_species: str) ->
     return pd.DataFrame(rows)
 
 
-def _v11_resolve_taxonomy_level(taxonomy_lookup: Any, species: str) -> str:
+def _resolve_taxonomy_level(taxonomy_lookup: Any, species: str) -> str:
     """Accept either the flat Dict[str, str] from build_species_taxonomy_lookup
     or the nested Dict[str, Dict] form, and return the species' taxonomy_level
     string (empty if unknown)."""
@@ -13537,13 +13386,12 @@ def _v11_resolve_taxonomy_level(taxonomy_lookup: Any, species: str) -> str:
     return ""
 
 
-# MRCA-with-human values seen in Ensembl ortholog "taxonomy_level" → V11
-# clade bucket. Note: Ensembl reports MRCA, *not* the species' own lineage,
+# MRCA-with-human values seen in Ensembl ortholog "taxonomy_level" → # clade bucket. Note: Ensembl reports MRCA, *not* the species' own lineage,
 # so e.g. "Eutheria" means "any non-primate placental mammal" (the MRCA with
 # human is Eutheria), and "Euteleostomi" covers every bony fish. We use MRCA
 # only when it pins the clade uniquely; otherwise we fall through to a
 # species-name pattern check below.
-_V11_MRCA_BUCKETS: Dict[str, str] = {
+_MRCA_BUCKETS: Dict[str, str] = {
     # Primate-line MRCAs ⇒ Mammalia.
     "catarrhini": "Mammalia", "simiiformes": "Mammalia", "hominoidea": "Mammalia",
     "hominidae": "Mammalia", "homininae": "Mammalia", "haplorrhini": "Mammalia",
@@ -13598,7 +13446,7 @@ _V11_MRCA_BUCKETS: Dict[str, str] = {
 # word-boundary discipline, bucket). Used to disambiguate cases where the
 # MRCA-based map can't (e.g. all bony fish reporting "Euteleostomi").
 # Pattern must occur as a whole _-delimited token, NOT a substring.
-_V11_SPECIES_NAME_PATTERNS: Tuple[Tuple[Tuple[str, ...], str], ...] = (
+_SPECIES_NAME_PATTERNS: Tuple[Tuple[Tuple[str, ...], str], ...] = (
     # Bird genera (some have Amniota MRCA, need bird override).
     (("gallus", "meleagris", "coturnix", "anas", "anser", "ficedula", "geospiza",
       "parus", "passer", "serinus", "taeniopygia", "aquila", "strigops",
@@ -13635,7 +13483,7 @@ _V11_SPECIES_NAME_PATTERNS: Tuple[Tuple[Tuple[str, ...], str], ...] = (
 # Override fish species incorrectly captured by the bird Aves heuristic above.
 # (Aves keywords like "stegastes"/"amphiprion"/"pygocentrus" are fish genera —
 # explicit teleost listing here outranks the Aves block.)
-_V11_TELEOST_GENUS_TOKENS: Tuple[str, ...] = (
+_TELEOST_GENUS_TOKENS: Tuple[str, ...] = (
     "danio", "oryzias", "gasterosteus", "takifugu", "tetraodon", "xiphophorus",
     "salmo", "oncorhynchus", "salvelinus", "poecilia", "oreochromis", "astyanax",
     "ictalurus", "gadus", "fundulus", "amphilophus", "seriola", "betta",
@@ -13654,7 +13502,7 @@ _V11_TELEOST_GENUS_TOKENS: Tuple[str, ...] = (
 )
 
 
-def _v11_species_tokens(species: str) -> List[str]:
+def _species_tokens(species: str) -> List[str]:
     """Split species name on underscores into lowercase tokens for word-
     boundary keyword matching."""
     return [tok for tok in str(species or "").strip().lower().split("_") if tok]
@@ -13664,7 +13512,7 @@ def _v11_species_tokens(species: str) -> List[str]:
 # marsupial mammal set the pipeline routinely sees so Ensembl's MRCA-style
 # taxonomy_level (which collapses many mammals into "Eutheria" or the query
 # species' own name) doesn't leak human/chimp into a "tetrapods" fallback.
-_V11_MAMMAL_GENUS_TOKENS: Tuple[str, ...] = (
+_MAMMAL_GENUS_TOKENS: Tuple[str, ...] = (
     "homo", "pan", "gorilla", "pongo", "nomascus", "hylobates",
     "macaca", "papio", "mandrillus", "cercocebus", "chlorocebus", "rhinopithecus",
     "saimiri", "aotus", "cebus", "callithrix", "carlito", "tarsius", "otolemur",
@@ -13691,40 +13539,40 @@ _V11_MAMMAL_GENUS_TOKENS: Tuple[str, ...] = (
 )
 
 
-def v11_resolve_broad_clade(species: str, taxonomy_level: Optional[str]) -> str:
-    """Return a coarse clade label suitable for the V11 representative
+def resolve_broad_clade(species: str, taxonomy_level: Optional[str]) -> str:
+    """Return a coarse clade label suitable for the representative
     bucketing. Combines species-name token matching (authoritative when it
     fires) with the Ensembl MRCA taxonomy_level (which is used as a fallback
     default since MRCA aliasing groups many distinct clades under one label,
     e.g. "Euteleostomi" covers every bony fish)."""
-    tokens = _v11_species_tokens(species)
+    tokens = _species_tokens(species)
     token_set = set(tokens)
 
     # 1. Mammal genus tokens — cover human (whose MRCA == species name) and
     #    the rest of the placental/marsupial set Ensembl ortho-tags via the
     #    overly broad "Eutheria" / "Catarrhini" / "Theria" MRCA labels.
-    if token_set & set(_V11_MAMMAL_GENUS_TOKENS):
+    if token_set & set(_MAMMAL_GENUS_TOKENS):
         return "Mammalia"
 
     # 2. Teleost genus tokens win next (fixes Aves/teleost name ambiguity).
-    if token_set & set(_V11_TELEOST_GENUS_TOKENS):
+    if token_set & set(_TELEOST_GENUS_TOKENS):
         return "Teleostei"
 
     # 3. Per-pattern species-name matches with whole-token boundary.
-    for keywords, bucket in _V11_SPECIES_NAME_PATTERNS:
+    for keywords, bucket in _SPECIES_NAME_PATTERNS:
         if token_set & set(keywords):
             return bucket
 
     # 4. MRCA-based fallback.
     tax = str(taxonomy_level or "").strip().lower()
-    if tax in _V11_MRCA_BUCKETS:
-        return _V11_MRCA_BUCKETS[tax]
+    if tax in _MRCA_BUCKETS:
+        return _MRCA_BUCKETS[tax]
     # Token containment (handles multi-word MRCAs we did not list literally).
-    for keyword, bucket in _V11_MRCA_BUCKETS.items():
+    for keyword, bucket in _MRCA_BUCKETS.items():
         if keyword in tax:
             return bucket
 
-    # 5. Last-resort fallback (best effort using V9.8 helpers).
+    # 5. Last-resort fallback (best effort using helpers).
     phylum = classify_alignment_phylum(species, taxonomy_level)
     if phylum and phylum != "Chordata":
         return phylum
@@ -13732,10 +13580,10 @@ def v11_resolve_broad_clade(species: str, taxonomy_level: Optional[str]) -> str:
     return inferred or "Unassigned"
 
 
-def v11_select_clade_representatives(alignment: Any,
+def select_clade_representatives(alignment: Any,
                                      reference_species: str,
                                      taxonomy_lookup: Optional[Dict[str, Any]] = None,
-                                     always_include: Sequence[str] = V11_MANDATORY_FOCUS_SPECIES) -> pd.DataFrame:
+                                     always_include: Sequence[str] = MANDATORY_FOCUS_SPECIES) -> pd.DataFrame:
     """Pick the species with the highest mean identity-to-reference inside
     each broad clade. Always include `always_include` (default: human +
     zebrafish) regardless of clade ranking.
@@ -13744,17 +13592,17 @@ def v11_select_clade_representatives(alignment: Any,
     mean_identity, overlapping_positions, identical_positions, is_reference,
     is_mandatory, selection_rank.
     """
-    identity_df = v11_compute_identity_to_reference(alignment, reference_species)
+    identity_df = compute_identity_to_reference(alignment, reference_species)
     if identity_df.empty:
         return identity_df
 
     # Resolve broad clade per species using the same classifiers as the rest
     # of the pipeline. Robust to either taxonomy_lookup shape.
     identity_df["taxonomy_level"] = identity_df["species"].apply(
-        lambda s: _v11_resolve_taxonomy_level(taxonomy_lookup, s)
+        lambda s: _resolve_taxonomy_level(taxonomy_lookup, s)
     )
     identity_df["clade"] = identity_df.apply(
-        lambda r: v11_resolve_broad_clade(r["species"], r["taxonomy_level"]) or "Unassigned",
+        lambda r: resolve_broad_clade(r["species"], r["taxonomy_level"]) or "Unassigned",
         axis=1,
     )
 
@@ -13794,7 +13642,7 @@ def v11_select_clade_representatives(alignment: Any,
     ]]
 
 
-def _v11_delta_vs_reference(per_species_df: pd.DataFrame, reference_species: str) -> pd.DataFrame:
+def _delta_vs_reference(per_species_df: pd.DataFrame, reference_species: str) -> pd.DataFrame:
     """Subtract the reference row from every other row, column-wise."""
     if per_species_df.empty:
         return per_species_df
@@ -13811,7 +13659,7 @@ def _v11_delta_vs_reference(per_species_df: pd.DataFrame, reference_species: str
     return pd.concat([meta, delta], axis=1)
 
 
-def _v11_plot_property_heatmap(delta_df: pd.DataFrame,
+def _plot_property_heatmap(delta_df: pd.DataFrame,
                                representatives_df: pd.DataFrame,
                                property_label: str,
                                *,
@@ -13826,9 +13674,8 @@ def _v11_plot_property_heatmap(delta_df: pd.DataFrame,
     if delta_df.empty or representatives_df.empty:
         return
     # Filter by the exact record_id of each rep so we don't accidentally
-    # include sibling paralogs from the same species (e.g. danio_rerio has
-    # two PLA2G4A paralogs in the alignment but the reps table only picks
-    # one).
+    # include sibling paralogs from the same species: several species return
+    # more than one ortholog record, but the reps table only picks one.
     keep_records = set(representatives_df["record_id"].astype(str))
     focus = delta_df[delta_df["record_id"].astype(str).isin(keep_records)].copy()
     if focus.empty:
@@ -13904,7 +13751,7 @@ def _v11_plot_property_heatmap(delta_df: pd.DataFrame,
     plt.close(fig)
 
 
-def _v11_plot_property_traces(charge_df: pd.DataFrame,
+def _plot_property_traces(charge_df: pd.DataFrame,
                               aromaticity_df: pd.DataFrame,
                               representatives_df: pd.DataFrame,
                               reference_species: str,
@@ -13914,7 +13761,7 @@ def _v11_plot_property_traces(charge_df: pd.DataFrame,
     (net-charge | aromaticity), each showing the species track (solid)
     overlaid on the human reference track (dashed) along the reference
     ungapped axis. Row-major layout keeps each panel wide and readable
-    for long proteins (PLA2G4A: 749 aa)."""
+    even for long proteins of several hundred residues."""
     if representatives_df.empty or charge_df.empty or aromaticity_df.empty:
         return
     # Match by record_id so paralogs of the same species don't sneak in.
@@ -13950,7 +13797,7 @@ def _v11_plot_property_traces(charge_df: pd.DataFrame,
         ax_a = axes[row_idx][1]
         clade = clade_lookup.get(rec_id, "Unassigned")
         is_ref = (species.lower() == ref)
-        clade_color = _v11_clade_color(clade)
+        clade_color = _clade_color(clade)
         row_label = f"{species}\n[{clade}]" + ("  (ref)" if is_ref else "")
         ax_c.set_ylabel(row_label, fontsize=9, rotation=0, ha="right", va="center", labelpad=70,
                          color=clade_color)
@@ -13991,7 +13838,7 @@ def _v11_plot_property_traces(charge_df: pd.DataFrame,
     plt.close(fig)
 
 
-def v11_build_representative_focused_ss_payload(comparative_ss_payload: Dict[str, Any],
+def build_representative_focused_ss_payload(comparative_ss_payload: Dict[str, Any],
                                                 representatives_df: pd.DataFrame) -> Dict[str, Any]:
     """Filter the existing comparative AlphaFold SS bundle to the focused
     representative set. Returns a payload with the same outer shape as
@@ -14016,12 +13863,12 @@ def v11_build_representative_focused_ss_payload(comparative_ss_payload: Dict[str
     return out
 
 
-# ---------- V11 paper-quality phylogenetic tree --------------------------- #
+# ---------- paper-quality phylogenetic tree --------------------------- #
 
-# Coarse broad-clade → presentation colour. Maps the V11 buckets to a
+# Coarse broad-clade → presentation colour. Maps the buckets to a
 # consistent palette used across the paper tree, heatmaps, and any future
 # interactive views.
-V11_CLADE_PALETTE: Dict[str, str] = {
+CLADE_PALETTE: Dict[str, str] = {
     "Mammalia":         "#2563eb",  # indigo
     "Aves":             "#16a34a",  # green
     "Reptilia":         "#0891b2",  # cyan
@@ -14059,16 +13906,16 @@ V11_CLADE_PALETTE: Dict[str, str] = {
 }
 
 # Genus-token sets for the MATLAB 9-group remap. Drawn from
-# _V11_MAMMAL_GENUS_TOKENS so the subdivision is consistent with how the
+# _MAMMAL_GENUS_TOKENS so the subdivision is consistent with how the
 # broad-clade resolver already buckets species into "Mammalia".
-_V11_PRIMATE_GENUS_TOKENS: Tuple[str, ...] = (
+_PRIMATE_GENUS_TOKENS: Tuple[str, ...] = (
     "homo", "pan", "gorilla", "pongo", "nomascus", "hylobates",
     "macaca", "papio", "mandrillus", "cercocebus", "chlorocebus",
     "rhinopithecus", "saimiri", "aotus", "cebus", "callithrix",
     "carlito", "tarsius", "otolemur", "microcebus", "prolemur",
     "propithecus", "lemur", "indri",
 )
-_V11_RODENT_GENUS_TOKENS: Tuple[str, ...] = (
+_RODENT_GENUS_TOKENS: Tuple[str, ...] = (
     # Rodentia
     "mus", "rattus", "peromyscus", "cricetulus", "mesocricetus", "microtus",
     "jaculus", "dipodomys", "octodon", "chinchilla", "cavia", "ictidomys",
@@ -14077,7 +13924,7 @@ _V11_RODENT_GENUS_TOKENS: Tuple[str, ...] = (
     # Lagomorpha — grouped with rodents (Glires) for the MATLAB chart.
     "ochotona", "oryctolagus", "lepus",
 )
-_V11_OTHER_FISH_BROAD_CLADES: frozenset = frozenset({
+_OTHER_FISH_BROAD_CLADES: frozenset = frozenset({
     "Holostei", "Polypteriformes", "Chondrostei", "Chondrichthyes",
     "Coelacanthiformes", "Dipnoi",
 })
@@ -14085,7 +13932,7 @@ _V11_OTHER_FISH_BROAD_CLADES: frozenset = frozenset({
 # Display order for the subdivided 9-group bubble grid (most-conserved →
 # most-distant), matching the row order of the user's reference MATLAB chart
 # we are reproducing in Python.
-_V11_GROUPED_BUBBLE_CLADE_ORDER: Tuple[str, ...] = (
+_GROUPED_BUBBLE_CLADE_ORDER: Tuple[str, ...] = (
     "Primates", "Rodents", "OtherMammals",
     "Teleosts", "OtherFish",
     "Birds", "Reptiles", "Amphibians",
@@ -14095,31 +13942,31 @@ _V11_GROUPED_BUBBLE_CLADE_ORDER: Tuple[str, ...] = (
 
 # Display order for the compact 9-group "mod" bubble grid — exact column order
 # from the user's reference clade_identity_by_reference_position_mod.csv.
-_V11_MOD_BUBBLE_CLADE_ORDER: Tuple[str, ...] = (
+_MOD_BUBBLE_CLADE_ORDER: Tuple[str, ...] = (
     "Primates", "Rodents", "OtherMammals",
     "Teleosts", "Birds", "Reptiles", "Amphibians",
     "Other", "x",
 )
 
 
-def v11_resolve_mod_clade(species: str, broad_clade: str) -> str:
-    """Remap a V11 broad clade label onto the user's MATLAB-era 9-group
+def resolve_mod_clade(species: str, broad_clade: str) -> str:
+    """Remap a broad clade label onto the user's MATLAB-era 9-group
     column set: Primates / Rodents / OtherMammals / Teleosts / Birds /
     Reptiles / Amphibians / Other / x. Same as the 9-group resolver but
     using the exact column names from the user's reference CSV
     `clade_identity_by_reference_position_mod.csv` (with `Other` for
     non-teleost fish and `x` for jawless / tunicates / unassigned).
     """
-    tokens = set(_v11_species_tokens(species or ""))
+    tokens = set(_species_tokens(species or ""))
     if broad_clade == "Mammalia":
-        if tokens & set(_V11_PRIMATE_GENUS_TOKENS):
+        if tokens & set(_PRIMATE_GENUS_TOKENS):
             return "Primates"
-        if tokens & set(_V11_RODENT_GENUS_TOKENS):
+        if tokens & set(_RODENT_GENUS_TOKENS):
             return "Rodents"
         return "OtherMammals"
     if broad_clade == "Teleostei":
         return "Teleosts"
-    if broad_clade in _V11_OTHER_FISH_BROAD_CLADES:
+    if broad_clade in _OTHER_FISH_BROAD_CLADES:
         return "Other"
     if broad_clade == "Aves":
         return "Birds"
@@ -14130,8 +13977,8 @@ def v11_resolve_mod_clade(species: str, broad_clade: str) -> str:
     return "x"
 
 
-def v11_resolve_grouped_clade(species: str, broad_clade: str) -> str:
-    """Remap a V11 broad clade label (`Mammalia`, `Aves`, ...) onto the
+def resolve_grouped_clade(species: str, broad_clade: str) -> str:
+    """Remap a broad clade label (`Mammalia`, `Aves`, ...) onto the
     subdivided 9-group categorization: Primates / Rodents / OtherMammals /
     Teleosts / OtherFish / Birds / Reptiles / Amphibians / OtherVertebrates.
 
@@ -14141,18 +13988,18 @@ def v11_resolve_grouped_clade(species: str, broad_clade: str) -> str:
     tunicates + cephalochordates + truly unassigned records collapse into
     OtherVertebrates. This is the Python reimplementation of the MATLAB
     clade-analysis grouping; the original was developed in MATLAB but is now
-    delivered alongside the V11 outputs for any input gene.
+    delivered alongside the outputs for any input gene.
     """
-    tokens = set(_v11_species_tokens(species or ""))
+    tokens = set(_species_tokens(species or ""))
     if broad_clade == "Mammalia":
-        if tokens & set(_V11_PRIMATE_GENUS_TOKENS):
+        if tokens & set(_PRIMATE_GENUS_TOKENS):
             return "Primates"
-        if tokens & set(_V11_RODENT_GENUS_TOKENS):
+        if tokens & set(_RODENT_GENUS_TOKENS):
             return "Rodents"
         return "OtherMammals"
     if broad_clade == "Teleostei":
         return "Teleosts"
-    if broad_clade in _V11_OTHER_FISH_BROAD_CLADES:
+    if broad_clade in _OTHER_FISH_BROAD_CLADES:
         return "OtherFish"
     if broad_clade == "Aves":
         return "Birds"
@@ -14163,11 +14010,11 @@ def v11_resolve_grouped_clade(species: str, broad_clade: str) -> str:
     return "OtherVertebrates"
 
 
-def _v11_clade_color(clade: str) -> str:
-    return V11_CLADE_PALETTE.get(clade or "Unassigned", "#374151")
+def _clade_color(clade: str) -> str:
+    return CLADE_PALETTE.get(clade or "Unassigned", "#374151")
 
 
-def v11_plot_paper_quality_tree_svg(treefile: Path | str,
+def plot_paper_quality_tree_svg(treefile: Path | str,
                                     out_svg: Path | str,
                                     *,
                                     representatives_df: Optional[pd.DataFrame] = None,
@@ -14176,7 +14023,7 @@ def v11_plot_paper_quality_tree_svg(treefile: Path | str,
                                     show_bootstrap_threshold: float = 70.0) -> Optional[Path]:
     """Render the IQ-TREE phylogeny with paper-quality styling:
 
-    * Tip labels colored by V11 broad clade.
+    * Tip labels colored by broad clade.
     * Representative species (from `representatives_df`) bolded and marked
       with a leading ★ glyph.
     * Bootstrap support shown only when ≥ `show_bootstrap_threshold`.
@@ -14201,7 +14048,7 @@ def v11_plot_paper_quality_tree_svg(treefile: Path | str,
     if representatives_df is not None and not representatives_df.empty:
         representative_keys = {str(s).lower() for s in representatives_df["species"]}
 
-    # Determine clade per tip via the V11 classifier.
+    # Determine clade per tip via the classifier.
     tip_clade: Dict[str, str] = {}
     for tip in tips:
         raw = str(tip.name or "")
@@ -14214,7 +14061,7 @@ def v11_plot_paper_quality_tree_svg(treefile: Path | str,
                 tax_level = str(raw_lookup.get("taxonomy_level") or raw_lookup.get("clade") or "")
             elif isinstance(raw_lookup, str):
                 tax_level = raw_lookup
-        clade = v11_resolve_broad_clade(species_key_norm, tax_level)
+        clade = resolve_broad_clade(species_key_norm, tax_level)
         tip_clade[raw] = clade
 
     # Figure & layout: scale aggressively for large tip counts so labels do
@@ -14265,7 +14112,7 @@ def v11_plot_paper_quality_tree_svg(treefile: Path | str,
                 clade = c
                 break
         if clade:
-            text.set_color(_v11_clade_color(clade))
+            text.set_color(_clade_color(clade))
         if is_rep:
             text.set_fontweight("bold")
             text.set_fontsize(11.0)
@@ -14287,25 +14134,25 @@ def v11_plot_paper_quality_tree_svg(treefile: Path | str,
     # Clade legend in lower-right.
     present_clades = sorted({c for c in tip_clade.values() if c})
     if present_clades:
-        legend_text_lines = ["Clade colors (V11)"]
+        legend_text_lines = ["Clade colors "]
         for c in present_clades:
-            color = _v11_clade_color(c)
+            color = _clade_color(c)
             legend_text_lines.append(f"  {c}")
         # Render legend as colored text via figtext for clarity.
         from matplotlib.lines import Line2D
         handles = [
-            Line2D([0], [0], marker="s", color=_v11_clade_color(c), linestyle="", markersize=9, label=c)
+            Line2D([0], [0], marker="s", color=_clade_color(c), linestyle="", markersize=9, label=c)
             for c in present_clades
         ]
         handles.append(Line2D([0], [0], marker=r"$\bigstar$", color="#374151", linestyle="", markersize=10,
-                              label="V11 clade representative"))
+                              label="clade representative"))
         ax.legend(
             handles=handles,
             loc="lower right",
             frameon=True,
             framealpha=0.92,
             fontsize=8,
-            title="V11",
+            title="",
         )
 
     fig.tight_layout()
@@ -14316,56 +14163,56 @@ def v11_plot_paper_quality_tree_svg(treefile: Path | str,
     return out_svg
 
 
-def v11_write_representative_comparison_outputs(outdir: Path | str,
+def write_representative_comparison_outputs(outdir: Path | str,
                                                 reference_projected_alignment: Any,
                                                 reference_species: str,
                                                 taxonomy_lookup: Optional[Dict[str, Dict[str, Any]]] = None,
-                                                smoothing_window: int = V11_DEFAULT_PROPERTY_WINDOW,
-                                                always_include: Sequence[str] = V11_MANDATORY_FOCUS_SPECIES) -> Dict[str, Any]:
-    """Compute and persist the V11 representative-comparison artifacts. Returns
+                                                smoothing_window: int = DEFAULT_PROPERTY_WINDOW,
+                                                always_include: Sequence[str] = MANDATORY_FOCUS_SPECIES) -> Dict[str, Any]:
+    """Compute and persist the representative-comparison artifacts. Returns
     a payload dict describing what was written (for logging / interactive
     report integration)."""
     outdir = Path(outdir)
 
-    reps_df = v11_select_clade_representatives(
+    reps_df = select_clade_representatives(
         reference_projected_alignment,
         reference_species=reference_species,
         taxonomy_lookup=taxonomy_lookup,
         always_include=always_include,
     )
-    reps_path = outdir / V11_DEFAULT_REPRESENTATIVE_CSV
+    reps_path = outdir / DEFAULT_REPRESENTATIVE_CSV
     reps_df.to_csv(reps_path, sep="\t", index=False)
 
-    charge_df = v11_compute_per_species_property_track(
+    charge_df = compute_per_species_property_track(
         reference_projected_alignment,
-        V11_RESIDUE_NET_CHARGE_PH74,
+        RESIDUE_NET_CHARGE_PH74,
         reference_species=reference_species,
         smoothing_window=smoothing_window,
     )
-    charge_df.to_csv(outdir / V11_NET_CHARGE_PER_SPECIES_CSV, index=False)
-    charge_delta_df = _v11_delta_vs_reference(charge_df, reference_species)
-    charge_delta_df.to_csv(outdir / V11_NET_CHARGE_DELTA_CSV, index=False)
+    charge_df.to_csv(outdir / NET_CHARGE_PER_SPECIES_CSV, index=False)
+    charge_delta_df = _delta_vs_reference(charge_df, reference_species)
+    charge_delta_df.to_csv(outdir / NET_CHARGE_DELTA_CSV, index=False)
 
-    arom_df = v11_compute_per_species_property_track(
+    arom_df = compute_per_species_property_track(
         reference_projected_alignment,
-        V11_RESIDUE_AROMATICITY,
+        RESIDUE_AROMATICITY,
         reference_species=reference_species,
         smoothing_window=smoothing_window,
     )
-    arom_df.to_csv(outdir / V11_AROMATICITY_PER_SPECIES_CSV, index=False)
-    arom_delta_df = _v11_delta_vs_reference(arom_df, reference_species)
-    arom_delta_df.to_csv(outdir / V11_AROMATICITY_DELTA_CSV, index=False)
+    arom_df.to_csv(outdir / AROMATICITY_PER_SPECIES_CSV, index=False)
+    arom_delta_df = _delta_vs_reference(arom_df, reference_species)
+    arom_delta_df.to_csv(outdir / AROMATICITY_DELTA_CSV, index=False)
 
     # Heatmaps: keep the focused-set rows from the delta frames.
-    heatmap_png = outdir / V11_REPRESENTATIVE_PROPERTY_HEATMAP_PNG
-    heatmap_svg = outdir / V11_REPRESENTATIVE_PROPERTY_HEATMAP_SVG
+    heatmap_png = outdir / REPRESENTATIVE_PROPERTY_HEATMAP_PNG
+    heatmap_svg = outdir / REPRESENTATIVE_PROPERTY_HEATMAP_SVG
     # Stack net-charge and aromaticity vertically in a single panel via two-pass call.
     # We emit one heatmap per property under suffix names for clarity.
-    charge_heat_png = outdir / "v11_representative_net_charge_heatmap.png"
-    charge_heat_svg = outdir / "v11_representative_net_charge_heatmap.svg"
-    arom_heat_png = outdir / "v11_representative_aromaticity_heatmap.png"
-    arom_heat_svg = outdir / "v11_representative_aromaticity_heatmap.svg"
-    _v11_plot_property_heatmap(
+    charge_heat_png = outdir / "representative_net_charge_heatmap.png"
+    charge_heat_svg = outdir / "representative_net_charge_heatmap.svg"
+    arom_heat_png = outdir / "representative_aromaticity_heatmap.png"
+    arom_heat_svg = outdir / "representative_aromaticity_heatmap.svg"
+    _plot_property_heatmap(
         charge_delta_df, reps_df,
         property_label="Net charge (pH 7.4)",
         cmap_name="RdBu_r",
@@ -14373,7 +14220,7 @@ def v11_write_representative_comparison_outputs(outdir: Path | str,
         outpath_png=charge_heat_png, outpath_svg=charge_heat_svg,
         reference_species=reference_species,
     )
-    _v11_plot_property_heatmap(
+    _plot_property_heatmap(
         arom_delta_df, reps_df,
         property_label="Aromaticity fraction",
         cmap_name="PuOr_r",
@@ -14391,9 +14238,9 @@ def v11_write_representative_comparison_outputs(outdir: Path | str,
         except OSError:
             pass
 
-    traces_png = outdir / V11_REPRESENTATIVE_PROPERTY_TRACES_PNG
-    traces_svg = outdir / V11_REPRESENTATIVE_PROPERTY_TRACES_SVG
-    _v11_plot_property_traces(charge_df, arom_df, reps_df, reference_species,
+    traces_png = outdir / REPRESENTATIVE_PROPERTY_TRACES_PNG
+    traces_svg = outdir / REPRESENTATIVE_PROPERTY_TRACES_SVG
+    _plot_property_traces(charge_df, arom_df, reps_df, reference_species,
                               outpath_png=traces_png, outpath_svg=traces_svg)
 
     # Focused SS bundle (filter the existing comparative bundle if present).
@@ -14402,8 +14249,8 @@ def v11_write_representative_comparison_outputs(outdir: Path | str,
     if comparative_ss_path.exists():
         try:
             comp_payload = json.loads(comparative_ss_path.read_text(encoding="utf-8"))
-            focused_ss_payload = v11_build_representative_focused_ss_payload(comp_payload, reps_df)
-            (outdir / V11_REPRESENTATIVE_SS_BUNDLE_JSON).write_text(
+            focused_ss_payload = build_representative_focused_ss_payload(comp_payload, reps_df)
+            (outdir / REPRESENTATIVE_SS_BUNDLE_JSON).write_text(
                 json.dumps(focused_ss_payload, indent=2), encoding="utf-8"
             )
         except (OSError, json.JSONDecodeError) as exc:
@@ -14412,14 +14259,14 @@ def v11_write_representative_comparison_outputs(outdir: Path | str,
     return {
         "representatives_path": str(reps_path),
         "representative_count": int(len(reps_df)),
-        "net_charge_per_species_path": str(outdir / V11_NET_CHARGE_PER_SPECIES_CSV),
-        "aromaticity_per_species_path": str(outdir / V11_AROMATICITY_PER_SPECIES_CSV),
-        "net_charge_delta_path": str(outdir / V11_NET_CHARGE_DELTA_CSV),
-        "aromaticity_delta_path": str(outdir / V11_AROMATICITY_DELTA_CSV),
+        "net_charge_per_species_path": str(outdir / NET_CHARGE_PER_SPECIES_CSV),
+        "aromaticity_per_species_path": str(outdir / AROMATICITY_PER_SPECIES_CSV),
+        "net_charge_delta_path": str(outdir / NET_CHARGE_DELTA_CSV),
+        "aromaticity_delta_path": str(outdir / AROMATICITY_DELTA_CSV),
         "net_charge_heatmap_png": str(charge_heat_png) if charge_heat_png.exists() else None,
         "aromaticity_heatmap_png": str(arom_heat_png) if arom_heat_png.exists() else None,
         "representative_traces_png": str(traces_png) if traces_png.exists() else None,
-        "focused_ss_bundle_path": str(outdir / V11_REPRESENTATIVE_SS_BUNDLE_JSON) if comparative_ss_path.exists() else None,
+        "focused_ss_bundle_path": str(outdir / REPRESENTATIVE_SS_BUNDLE_JSON) if comparative_ss_path.exists() else None,
         "focused_ss_payload_summary": {
             "available": focused_ss_payload.get("available"),
             "focused_species_count": focused_ss_payload.get("focused_species_count"),
@@ -14429,62 +14276,62 @@ def v11_write_representative_comparison_outputs(outdir: Path | str,
 
 
 # =============================================================================
-# V11 motif & lineage-stabilization extension                                 #
+# motif & lineage-stabilization extension                                      #
 # -----------------------------------------------------------------------------#
-# Two pieces, both keyed off ungapped reference positions and the V11 broad-  #
-# clade classifier (v11_resolve_broad_clade):                                  #
+# Two pieces, both keyed off ungapped reference positions and the broad-       #
+# clade classifier (resolve_broad_clade):                                      #
 #                                                                              #
 # 1. **User-supplied motif inspector** — `--annotated_motifs                   #
-#    "263-269:cPLA2_PL_rich_263_269"` lets the user point at any ref-position  #
+#    "120-130:rossmann_motif"` lets the user point at any ref-position         #
 #    range and gets per-species residues + per-clade consensus + sequence      #
-#    logos. No function is assumed; the label is whatever the user wrote.     #
-# 2. **Regex motif-library auto-scan** — V11_REGULATORY_MOTIF_LIBRARY holds a  #
+#    logos. No function is assumed; the label is whatever the user wrote.      #
+# 2. **Regex motif-library auto-scan** — REGULATORY_MOTIF_LIBRARY holds a      #
 #    small curated set (classical/bipartite NLS, NES, PEST, PxxP, LxxLL,       #
-#    leucine zipper). Each human-reference hit becomes a labeled range and    #
-#    flows through the same per-clade analysis pipeline. The user can add    #
-#    extra regexes via --v11_extra_motif_regex.                                #
+#    leucine zipper). Each human-reference hit becomes a labeled range and     #
+#    flows through the same per-clade analysis pipeline. The user can add      #
+#    extra regexes via --extra_motif_regex.                                    #
 #                                                                              #
 # Plus a "lineage stabilization" signal: per position, Shannon entropy is      #
-# computed within each broad clade; the difference between ancestral and      #
-# derived clade entropies is the stabilization score, a simplified            #
-# entropy-based approximation of Gu's Type I functional divergence            #
-# (Gu, MBE 1999; Gu, MBE 2006). For pair-wise clade differences we use        #
-# Jensen-Shannon divergence between per-clade residue frequency vectors,      #
-# following Capra & Singh (Bioinformatics 2007).                              #
+# computed within each broad clade; the difference between ancestral and       #
+# derived clade entropies is the stabilization score, a simplified             #
+# entropy-based approximation of Gu's Type I functional divergence             #
+# (Gu, MBE 1999; Gu, MBE 2006). For pair-wise clade differences we use         #
+# Jensen-Shannon divergence between per-clade residue frequency vectors,       #
+# following Capra & Singh (Bioinformatics 2007).                               #
 # =============================================================================
 
-import re as _v11_re
-from collections import Counter as _V11_Counter
+import re as _re
+from collections import Counter as _Counter
 
-V11_ANNOTATED_MOTIFS_TSV = "v11_annotated_motifs.tsv"
-V11_MOTIF_LIBRARY_HITS_TSV = "v11_motif_library_hits.tsv"
-V11_MOTIFS_MASTER_TSV = "v11_motifs_master.tsv"
-V11_PER_CLADE_ENTROPY_CSV = "v11_per_clade_entropy.csv"
-V11_PER_CLADE_CONSENSUS_CSV = "v11_per_clade_consensus.csv"
-V11_CLADE_PAIR_JS_DIVERGENCE_CSV = "v11_clade_pair_js_divergence.csv"
-V11_LINEAGE_STABILIZATION_CSV = "v11_lineage_stabilization.csv"
-V11_MOTIF_EVOLUTION_PER_SPECIES_TSV = "v11_motif_evolution_per_species.tsv"
-V11_MOTIF_EVOLUTION_PER_CLADE_TSV = "v11_motif_evolution_per_clade.tsv"
-V11_LINEAGE_STABILIZATION_LANDSCAPE_PNG = "v11_lineage_stabilization_landscape.png"
-V11_LINEAGE_STABILIZATION_LANDSCAPE_SVG = "v11_lineage_stabilization_landscape.svg"
-V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG = "v11_alignment_with_motif_annotations.svg"
-V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_HTML = "v11_alignment_with_motif_annotations.html"
+ANNOTATED_MOTIFS_TSV = "annotated_motifs.tsv"
+MOTIF_LIBRARY_HITS_TSV = "motif_library_hits.tsv"
+MOTIFS_MASTER_TSV = "motifs_master.tsv"
+PER_CLADE_ENTROPY_CSV = "per_clade_entropy.csv"
+PER_CLADE_CONSENSUS_CSV = "per_clade_consensus.csv"
+CLADE_PAIR_JS_DIVERGENCE_CSV = "clade_pair_js_divergence.csv"
+LINEAGE_STABILIZATION_CSV = "lineage_stabilization.csv"
+MOTIF_EVOLUTION_PER_SPECIES_TSV = "motif_evolution_per_species.tsv"
+MOTIF_EVOLUTION_PER_CLADE_TSV = "motif_evolution_per_clade.tsv"
+LINEAGE_STABILIZATION_LANDSCAPE_PNG = "lineage_stabilization_landscape.png"
+LINEAGE_STABILIZATION_LANDSCAPE_SVG = "lineage_stabilization_landscape.svg"
+ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG = "alignment_with_motif_annotations.svg"
+ALIGNMENT_WITH_MOTIF_ANNOTATIONS_HTML = "alignment_with_motif_annotations.html"
 
 # Default ancestral / derived clade buckets for the stabilization score. They
-# match the typical "before vs after jawed-vertebrate emergence" comparison
-# used for cPLA2-style proteins. Users can override via CLI flags.
-V11_DEFAULT_ANCESTRAL_CLADES: Tuple[str, ...] = ("Cyclostomata", "Tunicata", "Chondrichthyes")
-V11_DEFAULT_DERIVED_CLADES: Tuple[str, ...] = ("Mammalia", "Aves", "Reptilia")
+# match the typical "before vs after jawed-vertebrate emergence" comparison.
+# Users can override via CLI flags.
+DEFAULT_ANCESTRAL_CLADES: Tuple[str, ...] = ("Cyclostomata", "Tunicata", "Chondrichthyes")
+DEFAULT_DERIVED_CLADES: Tuple[str, ...] = ("Mammalia", "Aves", "Reptilia")
 
 # Standard 20 amino acids for entropy normalization (gaps & ambiguities are
 # tracked separately as occupancy).
-_V11_AA_ALPHABET: Tuple[str, ...] = tuple("ACDEFGHIKLMNPQRSTVWY")
+_AA_ALPHABET: Tuple[str, ...] = tuple("ACDEFGHIKLMNPQRSTVWY")
 
 # Curated regulatory-motif library. Each entry is (name, regex, description,
 # citation). Regexes are case-sensitive and applied to the upper-case human
-# reference (ungapped). They are intentionally permissive — V11 reports each
+# reference (ungapped). They are intentionally permissive — reports each
 # hit; the user decides which to trust.
-V11_REGULATORY_MOTIF_LIBRARY: Tuple[Tuple[str, str, str, str], ...] = (
+REGULATORY_MOTIF_LIBRARY: Tuple[Tuple[str, str, str, str], ...] = (
     ("NLS_classical_monopartite", r"K(K|R)[A-Z](K|R)", "Classical monopartite nuclear localization signal (K-rich)", "Lange et al., Trends Cell Biol 2007"),
     ("NLS_bipartite", r"[KR][KR][A-Z]{10,12}[KR][KR][A-Z][KR][KR]", "Bipartite nuclear localization signal", "Robbins et al., Cell 1991"),
     ("NES_leucine_rich", r"L[A-Z]{2,3}[LIMVF][A-Z]{2,3}[LIMVF][A-Z]L", "Leucine-rich nuclear export signal (CRM1-binding)", "la Cour et al., Protein Eng Des Sel 2004"),
@@ -14495,7 +14342,7 @@ V11_REGULATORY_MOTIF_LIBRARY: Tuple[Tuple[str, str, str, str], ...] = (
     ("Proline_rich_stretch", r"P[A-Z]{0,2}P[A-Z]{0,2}P[A-Z]{0,2}P", "Generic proline-rich stretch (≥4 P within 12 residues)", "Williamson, Biochem J 1994"),
     ("Acidic_blob", r"[DE]{4,}", "Acidic blob (≥4 contiguous D/E)", "Sigler, Nature 1988"),
     ("Basic_blob", r"[KR]{4,}", "Basic blob (≥4 contiguous K/R)", "Generic"),
-    # ----- V11.1 additions (2026-06-01): regulatory landscape expansion ----- #
+    # ----- .1 additions (2026-06-01): regulatory landscape expansion ----- #
     # Phospho-dependent partner-binding motifs (14-3-3 family). Sequences
     # written without explicit phospho marker — S/T is the phospho-acceptor
     # and any per-species loss of that S/T is downstream of the motif scan.
@@ -14519,8 +14366,8 @@ V11_REGULATORY_MOTIF_LIBRARY: Tuple[Tuple[str, str, str, str], ...] = (
 
 # ----------------------- residue / motif parsing helpers ----------------------#
 
-def v11_parse_annotated_motifs(motif_text: Optional[str]) -> pd.DataFrame:
-    """Parse `"263-269:cPLA2_PL_rich_263_269,500-505:label_b"` into
+def parse_annotated_motifs(motif_text: Optional[str]) -> pd.DataFrame:
+    """Parse `"120-130:label_a,300-305:label_b"` into
     [motif_id, start, end, label, source]. Start and end are 1-based,
     inclusive, and both must be present (single positions still need
     `pos-pos`). No function/sequence is assumed."""
@@ -14558,7 +14405,7 @@ def v11_parse_annotated_motifs(motif_text: Optional[str]) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["motif_id", "start", "end", "label", "source"])
 
 
-def v11_parse_extra_motif_regex(text: Optional[str]) -> List[Tuple[str, str]]:
+def parse_extra_motif_regex(text: Optional[str]) -> List[Tuple[str, str]]:
     """Parse `"name1:regex1,name2:regex2"` into list of (name, regex)."""
     out: List[Tuple[str, str]] = []
     if not text:
@@ -14575,8 +14422,8 @@ def v11_parse_extra_motif_regex(text: Optional[str]) -> List[Tuple[str, str]]:
     return out
 
 
-def v11_scan_motif_library(reference_sequence: str,
-                           library: Sequence[Tuple[str, str, str, str]] = V11_REGULATORY_MOTIF_LIBRARY,
+def scan_motif_library(reference_sequence: str,
+                           library: Sequence[Tuple[str, str, str, str]] = REGULATORY_MOTIF_LIBRARY,
                            extra_regex: Optional[Sequence[Tuple[str, str]]] = None) -> pd.DataFrame:
     """Scan an ungapped reference sequence with every regex in the library.
     Coordinates returned are 1-based, inclusive. Each library entry can hit
@@ -14589,8 +14436,8 @@ def v11_scan_motif_library(reference_sequence: str,
         full_lib.append((str(name), str(regex), "User-supplied extra motif regex", "user"))
     for name, regex, description, citation in full_lib:
         try:
-            compiled = _v11_re.compile(regex)
-        except _v11_re.error:
+            compiled = _re.compile(regex)
+        except _re.error:
             continue
         for m in compiled.finditer(ref):
             start_1b = m.start() + 1
@@ -14614,7 +14461,7 @@ def v11_scan_motif_library(reference_sequence: str,
     ])
 
 
-def v11_merge_motif_tables(user_df: pd.DataFrame, library_df: pd.DataFrame) -> pd.DataFrame:
+def merge_motif_tables(user_df: pd.DataFrame, library_df: pd.DataFrame) -> pd.DataFrame:
     """Union user-supplied motifs with library hits; return a single table
     keyed by motif_id. User motifs come first."""
     frames: List[pd.DataFrame] = []
@@ -14637,7 +14484,7 @@ def v11_merge_motif_tables(user_df: pd.DataFrame, library_df: pd.DataFrame) -> p
 
 # ----------------- per-clade entropy / consensus / JS divergence -------------#
 
-def _v11_ref_position_records(alignment: Any, reference_species: str) -> Tuple[List[Optional[int]], Any]:
+def _ref_position_records(alignment: Any, reference_species: str) -> Tuple[List[Optional[int]], Any]:
     """Return (alignment_col → ref_ungapped_position, reference_record)."""
     target = (reference_species or "").strip().lower()
     ref_record = None
@@ -14660,18 +14507,18 @@ def _v11_ref_position_records(alignment: Any, reference_species: str) -> Tuple[L
     return aln_to_ref, ref_record
 
 
-def _v11_species_clade_map(alignment: Any,
+def _species_clade_map(alignment: Any,
                            taxonomy_lookup: Optional[Dict[str, Any]]) -> Dict[str, str]:
-    """Return record_id → broad clade, using v11_resolve_broad_clade."""
+    """Return record_id → broad clade, using resolve_broad_clade."""
     out: Dict[str, str] = {}
     for record in alignment:
         species, _ = parse_header_species_symbol(record.id)
-        tax_level = _v11_resolve_taxonomy_level(taxonomy_lookup, species) if taxonomy_lookup is not None else ""
-        out[str(record.id)] = v11_resolve_broad_clade(species, tax_level) or "Unassigned"
+        tax_level = _resolve_taxonomy_level(taxonomy_lookup, species) if taxonomy_lookup is not None else ""
+        out[str(record.id)] = resolve_broad_clade(species, tax_level) or "Unassigned"
     return out
 
 
-def _v11_shannon_entropy_from_counts(counts: Dict[str, int]) -> Tuple[float, int]:
+def _shannon_entropy_from_counts(counts: Dict[str, int]) -> Tuple[float, int]:
     """Return (Shannon entropy in bits, total non-gap count)."""
     total = sum(int(v) for k, v in counts.items() if k not in GAP_CHARS)
     if total == 0:
@@ -14685,7 +14532,7 @@ def _v11_shannon_entropy_from_counts(counts: Dict[str, int]) -> Tuple[float, int
     return float(h), int(total)
 
 
-def v11_compute_per_clade_entropy(alignment: Any,
+def compute_per_clade_entropy(alignment: Any,
                                   taxonomy_lookup: Optional[Dict[str, Any]],
                                   reference_species: str) -> pd.DataFrame:
     """Per ungapped reference position, return Shannon entropy and occupancy
@@ -14693,8 +14540,8 @@ def v11_compute_per_clade_entropy(alignment: Any,
         reference_ungapped_position, reference_residue,
         entropy_<clade>, occupancy_<clade>, ...
     """
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
-    species_clade = _v11_species_clade_map(alignment, taxonomy_lookup)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
+    species_clade = _species_clade_map(alignment, taxonomy_lookup)
     # Pre-collect records grouped by clade.
     clade_records: Dict[str, List[Any]] = {}
     for record in alignment:
@@ -14713,20 +14560,20 @@ def v11_compute_per_clade_entropy(alignment: Any,
             "reference_residue": ref_seq[col_idx] if col_idx < len(ref_seq) else "-",
         }
         for clade, records in clade_records.items():
-            counts: _V11_Counter = _V11_Counter()
+            counts: _Counter = _Counter()
             for rec in records:
                 seq = str(rec.seq)
                 if col_idx < len(seq):
                     counts[seq[col_idx].upper()] += 1
-            h, occ = _v11_shannon_entropy_from_counts(dict(counts))
+            h, occ = _shannon_entropy_from_counts(dict(counts))
             row[f"entropy_{clade}"] = h
             row[f"occupancy_{clade}"] = occ
         rows.append(row)
     return pd.DataFrame(rows)
 
 
-# ----------------------- V11.1 Subgroup-Discriminating Positions ------------#
-# Central pillar of V11.1 Functional Divergence module: user picks two named
+# ----------------------- .1 Subgroup-Discriminating Positions ------------#
+# Central pillar of .1 Functional Divergence module: user picks two named
 # subgroups of species; per ungapped reference position, scores how strongly
 # the two subgroups conserve DIFFERENT residues. Captures both subcellular-
 # targeting phenotype divergence (e.g. nuclear-vs-cytoplasmic localisation)
@@ -14734,10 +14581,10 @@ def v11_compute_per_clade_entropy(alignment: Any,
 # a substrate the lab tests) — one statistic, two phenotype classes.
 # -----------------------------------------------------------------------------
 
-V11_SUBGROUP_SDP_CSV_TEMPLATE = "v11_subgroup_sdp_{label_a}_vs_{label_b}.csv"
+SUBGROUP_SDP_CSV_TEMPLATE = "subgroup_sdp_{label_a}_vs_{label_b}.csv"
 
 
-def _v11_fisher_exact_2x2_two_sided(a: int, b: int, c: int, d: int) -> float:
+def _fisher_exact_2x2_two_sided(a: int, b: int, c: int, d: int) -> float:
     """Hand-rolled two-sided Fisher's exact for a 2x2 contingency table
 
         |          | residue X | other |
@@ -14779,7 +14626,7 @@ def _v11_fisher_exact_2x2_two_sided(a: int, b: int, c: int, d: int) -> float:
     return float(max(0.0, min(1.0, total)))
 
 
-def _v11_property_class_for_aa(aa: str, scheme: Dict[str, set[str]]) -> Optional[str]:
+def _property_class_for_aa(aa: str, scheme: Dict[str, set[str]]) -> Optional[str]:
     aa = (aa or "").upper()
     for cls, residues in scheme.items():
         if aa in residues:
@@ -14787,7 +14634,7 @@ def _v11_property_class_for_aa(aa: str, scheme: Dict[str, set[str]]) -> Optional
     return None
 
 
-def v11_compute_subgroup_sdp(alignment: Any,
+def compute_subgroup_sdp(alignment: Any,
                              reference_species: str,
                              subgroup_a_species: Sequence[str],
                              subgroup_b_species: Sequence[str],
@@ -14826,7 +14673,7 @@ def v11_compute_subgroup_sdp(alignment: Any,
                 "neutral": set("AVILMFWYCNQSTPG"),
             }
 
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
     ref_seq = str(ref_record.seq).upper()
 
     a_keys = {str(s).strip().lower() for s in (subgroup_a_species or ()) if str(s).strip()}
@@ -14881,13 +14728,13 @@ def v11_compute_subgroup_sdp(alignment: Any,
         counts_b = _column_counts(records_b, col_idx)
         cons_a, frac_a, n_a = _consensus(counts_a)
         cons_b, frac_b, n_b = _consensus(counts_b)
-        h_a, _ = _v11_shannon_entropy_from_counts(counts_a)
-        h_b, _ = _v11_shannon_entropy_from_counts(counts_b)
+        h_a, _ = _shannon_entropy_from_counts(counts_a)
+        h_b, _ = _shannon_entropy_from_counts(counts_b)
         delta_h = h_a - h_b
 
         consensus_changed = (cons_a != cons_b) and cons_a != "-" and cons_b != "-"
-        prop_a = _v11_property_class_for_aa(cons_a, property_scheme) if property_scheme else None
-        prop_b = _v11_property_class_for_aa(cons_b, property_scheme) if property_scheme else None
+        prop_a = _property_class_for_aa(cons_a, property_scheme) if property_scheme else None
+        prop_b = _property_class_for_aa(cons_b, property_scheme) if property_scheme else None
         prop_changed = bool(prop_a and prop_b and prop_a != prop_b)
 
         if n_a >= min_occupancy and n_b >= min_occupancy and consensus_changed:
@@ -14902,7 +14749,7 @@ def v11_compute_subgroup_sdp(alignment: Any,
             a_without = n_a - a_with
             b_with = counts_b.get(cons_a, 0)
             b_without = n_b - b_with
-            p_value = _v11_fisher_exact_2x2_two_sided(a_with, a_without, b_with, b_without)
+            p_value = _fisher_exact_2x2_two_sided(a_with, a_without, b_with, b_without)
         else:
             p_value = float("nan")
 
@@ -14934,7 +14781,7 @@ def v11_compute_subgroup_sdp(alignment: Any,
     return df
 
 
-def v11_write_subgroup_sdp_outputs(outdir: Path | str,
+def write_subgroup_sdp_outputs(outdir: Path | str,
                                    alignment: Any,
                                    reference_species: str,
                                    subgroup_a_species: Sequence[str],
@@ -14942,12 +14789,12 @@ def v11_write_subgroup_sdp_outputs(outdir: Path | str,
                                    label_a: str = "A",
                                    label_b: str = "B") -> Optional[Path]:
     """Compute the SDP DataFrame and persist it as
-    v11_subgroup_sdp_<label_a>_vs_<label_b>.csv.
+    subgroup_sdp_<label_a>_vs_<label_b>.csv.
     Returns the output Path or None if the analyzer found no overlap between
     requested subgroups and the alignment.
     """
     outdir = Path(outdir)
-    df = v11_compute_subgroup_sdp(
+    df = compute_subgroup_sdp(
         alignment,
         reference_species,
         subgroup_a_species,
@@ -14957,14 +14804,14 @@ def v11_write_subgroup_sdp_outputs(outdir: Path | str,
     )
     if df is None or df.empty:
         return None
-    safe_a = _v11_re.sub(r"[^A-Za-z0-9_-]+", "_", str(label_a)).strip("_") or "A"
-    safe_b = _v11_re.sub(r"[^A-Za-z0-9_-]+", "_", str(label_b)).strip("_") or "B"
-    out = outdir / V11_SUBGROUP_SDP_CSV_TEMPLATE.format(label_a=safe_a, label_b=safe_b)
+    safe_a = _re.sub(r"[^A-Za-z0-9_-]+", "_", str(label_a)).strip("_") or "A"
+    safe_b = _re.sub(r"[^A-Za-z0-9_-]+", "_", str(label_b)).strip("_") or "B"
+    out = outdir / SUBGROUP_SDP_CSV_TEMPLATE.format(label_a=safe_a, label_b=safe_b)
     df.to_csv(out, index=False)
     return out
 
 
-# ----------------- V11.1 Phospho-regulatable signal detector -----------------#
+# ----------------- .1 Phospho-regulatable signal detector -----------------#
 # For every regulatory motif hit (e.g. NLS, NES, 14-3-3-binding) AND any
 # active-site / catalytic residue from KNOWN_SITE_CONFIGS-derived annotation,
 # scan ±10 residues for S/T/Y. Classify the parent motif as
@@ -14974,15 +14821,15 @@ def v11_write_subgroup_sdp_outputs(outdir: Path | str,
 # human has A near an NLS → candidate phospho-mediated localisation switch).
 # -----------------------------------------------------------------------------
 
-V11_PHOSPHO_REGULATABLE_TSV = "v11_phospho_regulatable_signals.tsv"
-V11_PHOSPHO_REGULATABLE_WINDOW = 10
+PHOSPHO_REGULATABLE_TSV = "phospho_regulatable_signals.tsv"
+PHOSPHO_REGULATABLE_WINDOW = 10
 
 
-def v11_compute_phospho_regulatable_signals(alignment: Any,
+def compute_phospho_regulatable_signals(alignment: Any,
                                             reference_species: str,
                                             library_hits_df: Optional[pd.DataFrame] = None,
                                             extra_anchor_positions: Optional[Sequence[Tuple[int, str]]] = None,
-                                            window: int = V11_PHOSPHO_REGULATABLE_WINDOW) -> pd.DataFrame:
+                                            window: int = PHOSPHO_REGULATABLE_WINDOW) -> pd.DataFrame:
     """Find every S / T / Y within `window` residues of a motif hit or
     user-supplied anchor (catalytic / active-site residue) and report:
       - parent_motif_id (or "active_site")
@@ -14994,12 +14841,12 @@ def v11_compute_phospho_regulatable_signals(alignment: Any,
       - phospho_loss_species (semicolon-joined species that mutated S/T/Y to a
         non-phospho residue)
 
-    `library_hits_df` is the DataFrame from `v11_scan_motif_library`; rows
+    `library_hits_df` is the DataFrame from `scan_motif_library`; rows
     with `start` and `end` (1-based, inclusive) are consumed. Pass
-    `extra_anchor_positions = [(228, "S228 nucleophile"), (549, "D549 proton
-    acceptor")]` to also probe around catalytic residues.
+    `extra_anchor_positions = [(155, "Y155"), (159, "K159")]` to also probe
+    around catalytic residues.
     """
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
     ref_seq = str(ref_record.seq).upper()
     ref_to_col: Dict[int, int] = {p: i for i, p in enumerate(aln_to_ref) if p is not None}
     if not ref_to_col:
@@ -15098,25 +14945,25 @@ def v11_compute_phospho_regulatable_signals(alignment: Any,
     return df
 
 
-def v11_write_phospho_regulatable_outputs(outdir: Path | str,
+def write_phospho_regulatable_outputs(outdir: Path | str,
                                           alignment: Any,
                                           reference_species: str,
                                           library_hits_df: Optional[pd.DataFrame],
                                           extra_anchor_positions: Optional[Sequence[Tuple[int, str]]] = None,
-                                          window: int = V11_PHOSPHO_REGULATABLE_WINDOW) -> Path:
+                                          window: int = PHOSPHO_REGULATABLE_WINDOW) -> Path:
     outdir = Path(outdir)
-    df = v11_compute_phospho_regulatable_signals(
+    df = compute_phospho_regulatable_signals(
         alignment, reference_species,
         library_hits_df=library_hits_df,
         extra_anchor_positions=extra_anchor_positions,
         window=window,
     )
-    out = outdir / V11_PHOSPHO_REGULATABLE_TSV
+    out = outdir / PHOSPHO_REGULATABLE_TSV
     df.to_csv(out, sep="\t", index=False)
     return out
 
 
-# ----------------- V11.1 Intrinsically Disordered Region (IDR) predictor ----#
+# ----------------- .1 Intrinsically Disordered Region (IDR) predictor ----#
 # Lightweight, no external dependency. Per residue, combines Wootton-Federhen
 # complexity (normalised log of multinomial coefficient over an L-residue
 # window) with a disorder-promoting-amino-acid fraction (P,E,S,Q,K,A). IDR
@@ -15128,15 +14975,15 @@ def v11_write_phospho_regulatable_outputs(outdir: Path | str,
 # contains regulatory motifs missing from the human ortholog.
 # -----------------------------------------------------------------------------
 
-V11_IDR_PREDICTIONS_CSV = "v11_idr_predictions_per_species.csv"
-V11_IDR_DISORDER_PROMOTING_RESIDUES: frozenset = frozenset("PESQKA")
-V11_IDR_WINDOW = 20
-V11_IDR_SMOOTHING = 5
-V11_IDR_THRESHOLD = 0.55
-V11_IDR_MIN_LENGTH = 15
+IDR_PREDICTIONS_CSV = "idr_predictions_per_species.csv"
+IDR_DISORDER_PROMOTING_RESIDUES: frozenset = frozenset("PESQKA")
+IDR_WINDOW = 20
+IDR_SMOOTHING = 5
+IDR_THRESHOLD = 0.55
+IDR_MIN_LENGTH = 15
 
 
-def _v11_wootton_federhen_complexity(window_seq: str) -> float:
+def _wootton_federhen_complexity(window_seq: str) -> float:
     """Normalised Wootton-Federhen complexity K_normalised in [0, 1].
 
     K = (1/L) * log2(L! / prod(n_i!)) for the standard 20-aa alphabet.
@@ -15167,25 +15014,25 @@ def _v11_wootton_federhen_complexity(window_seq: str) -> float:
     return float(max(0.0, min(1.0, K / K_max if K_max > 0 else 0.0)))
 
 
-def _v11_idr_score_for_window(window_seq: str) -> float:
+def _idr_score_for_window(window_seq: str) -> float:
     cleaned = [aa for aa in window_seq if aa not in {"-", "."}]
     if not cleaned:
         return 0.0
-    K = _v11_wootton_federhen_complexity("".join(cleaned))
-    disorder_frac = sum(1 for aa in cleaned if aa in V11_IDR_DISORDER_PROMOTING_RESIDUES) / len(cleaned)
+    K = _wootton_federhen_complexity("".join(cleaned))
+    disorder_frac = sum(1 for aa in cleaned if aa in IDR_DISORDER_PROMOTING_RESIDUES) / len(cleaned)
     return float(0.5 * (1.0 - K) + 0.5 * disorder_frac)
 
 
-def _v11_per_residue_idr_track(seq_ungapped: str,
-                               window: int = V11_IDR_WINDOW,
-                               smoothing: int = V11_IDR_SMOOTHING) -> List[float]:
+def _per_residue_idr_track(seq_ungapped: str,
+                               window: int = IDR_WINDOW,
+                               smoothing: int = IDR_SMOOTHING) -> List[float]:
     n = len(seq_ungapped)
     raw: List[float] = []
     half_w = window // 2
     for i in range(n):
         lo = max(0, i - half_w)
         hi = min(n, i + half_w + 1)
-        raw.append(_v11_idr_score_for_window(seq_ungapped[lo:hi]))
+        raw.append(_idr_score_for_window(seq_ungapped[lo:hi]))
     if smoothing <= 1:
         return raw
     half_s = smoothing // 2
@@ -15197,9 +15044,9 @@ def _v11_per_residue_idr_track(seq_ungapped: str,
     return smoothed
 
 
-def _v11_call_idrs(track: Sequence[float],
-                   threshold: float = V11_IDR_THRESHOLD,
-                   min_length: int = V11_IDR_MIN_LENGTH) -> List[Tuple[int, int, float]]:
+def _call_idrs(track: Sequence[float],
+                   threshold: float = IDR_THRESHOLD,
+                   min_length: int = IDR_MIN_LENGTH) -> List[Tuple[int, int, float]]:
     """Walk the track and return [(start_1b, end_1b_inclusive, mean_score), ...]
     for contiguous runs above threshold of length >= min_length."""
     spans: List[Tuple[int, int, float]] = []
@@ -15224,12 +15071,12 @@ def _v11_call_idrs(track: Sequence[float],
     return spans
 
 
-def v11_compute_idr_per_species(alignment: Any,
+def compute_idr_per_species(alignment: Any,
                                 library_hits_df: Optional[pd.DataFrame] = None,
-                                window: int = V11_IDR_WINDOW,
-                                smoothing: int = V11_IDR_SMOOTHING,
-                                threshold: float = V11_IDR_THRESHOLD,
-                                min_length: int = V11_IDR_MIN_LENGTH) -> pd.DataFrame:
+                                window: int = IDR_WINDOW,
+                                smoothing: int = IDR_SMOOTHING,
+                                threshold: float = IDR_THRESHOLD,
+                                min_length: int = IDR_MIN_LENGTH) -> pd.DataFrame:
     """One row per IDR call per species: species, start, end, length,
     mean_idr_score, contains_motifs (semicolon-joined motif_ids overlapping
     the region, only relevant for the reference species since motif hits
@@ -15251,8 +15098,8 @@ def v11_compute_idr_per_species(alignment: Any,
         if not seq:
             continue
         species, _ = parse_header_species_symbol(str(rec.id))
-        track = _v11_per_residue_idr_track(seq, window=window, smoothing=smoothing)
-        for start, end, mean_score in _v11_call_idrs(track, threshold=threshold, min_length=min_length):
+        track = _per_residue_idr_track(seq, window=window, smoothing=smoothing)
+        for start, end, mean_score in _call_idrs(track, threshold=threshold, min_length=min_length):
             overlaps: List[str] = []
             for ms, me, mid in motif_intervals:
                 if me >= start and ms <= end:
@@ -15274,26 +15121,26 @@ def v11_compute_idr_per_species(alignment: Any,
     return pd.DataFrame(rows)
 
 
-def v11_write_idr_predictions(outdir: Path | str,
+def write_idr_predictions(outdir: Path | str,
                               alignment: Any,
                               library_hits_df: Optional[pd.DataFrame] = None,
-                              window: int = V11_IDR_WINDOW,
-                              smoothing: int = V11_IDR_SMOOTHING,
-                              threshold: float = V11_IDR_THRESHOLD,
-                              min_length: int = V11_IDR_MIN_LENGTH) -> Path:
+                              window: int = IDR_WINDOW,
+                              smoothing: int = IDR_SMOOTHING,
+                              threshold: float = IDR_THRESHOLD,
+                              min_length: int = IDR_MIN_LENGTH) -> Path:
     outdir = Path(outdir)
-    df = v11_compute_idr_per_species(
+    df = compute_idr_per_species(
         alignment,
         library_hits_df=library_hits_df,
         window=window, smoothing=smoothing,
         threshold=threshold, min_length=min_length,
     )
-    out = outdir / V11_IDR_PREDICTIONS_CSV
+    out = outdir / IDR_PREDICTIONS_CSV
     df.to_csv(out, index=False)
     return out
 
 
-# ----------------- V11.1 AlphaFold pocket detector --------------------------#
+# ----------------- .1 AlphaFold pocket detector --------------------------#
 # Lightweight Cα-packing-based pocket scoring (no FreeSASA dependency).
 # For every residue in the human reference AlphaFold model, count the number
 # of Cα atoms within 10 Å (`packing_density`). Classify:
@@ -15304,15 +15151,15 @@ def v11_write_idr_predictions(outdir: Path | str,
 # Also flags `near_active_site` if any active-site residue lies within 8 Å.
 # -----------------------------------------------------------------------------
 
-V11_POCKET_RESIDUES_CSV = "v11_pocket_residues.csv"
-V11_POCKET_CORE_THRESHOLD = 14
-V11_POCKET_LINING_MIN = 9
-V11_POCKET_LINING_MAX = 13
-V11_POCKET_NEIGHBOUR_RADIUS = 10.0
-V11_POCKET_ACTIVE_SITE_RADIUS = 8.0
+POCKET_RESIDUES_CSV = "pocket_residues.csv"
+POCKET_CORE_THRESHOLD = 14
+POCKET_LINING_MIN = 9
+POCKET_LINING_MAX = 13
+POCKET_NEIGHBOUR_RADIUS = 10.0
+POCKET_ACTIVE_SITE_RADIUS = 8.0
 
 
-def _v11_parse_pdb_ca_atoms(pdb_text: str) -> List[Dict[str, Any]]:
+def _parse_pdb_ca_atoms(pdb_text: str) -> List[Dict[str, Any]]:
     """Parse Cα ATOM records from an AlphaFold PDB. Returns a list of
     {resi, resn, aa, x, y, z, plddt} dicts. Skips alternate locations
     other than the empty / 'A' altloc."""
@@ -15353,17 +15200,17 @@ def _v11_parse_pdb_ca_atoms(pdb_text: str) -> List[Dict[str, Any]]:
     return atoms
 
 
-def v11_compute_pocket_residues(pdb_text: str,
+def compute_pocket_residues(pdb_text: str,
                                 active_site_positions: Optional[Sequence[int]] = None,
-                                neighbour_radius: float = V11_POCKET_NEIGHBOUR_RADIUS,
-                                active_site_radius: float = V11_POCKET_ACTIVE_SITE_RADIUS,
-                                core_threshold: int = V11_POCKET_CORE_THRESHOLD,
-                                lining_min: int = V11_POCKET_LINING_MIN,
-                                lining_max: int = V11_POCKET_LINING_MAX) -> pd.DataFrame:
+                                neighbour_radius: float = POCKET_NEIGHBOUR_RADIUS,
+                                active_site_radius: float = POCKET_ACTIVE_SITE_RADIUS,
+                                core_threshold: int = POCKET_CORE_THRESHOLD,
+                                lining_min: int = POCKET_LINING_MIN,
+                                lining_max: int = POCKET_LINING_MAX) -> pd.DataFrame:
     """Return one row per residue: residue_number, residue_aa, packing_density,
     classification ∈ {core, pocket_lining, surface, buried_static}, plddt,
     near_active_site (bool), distance_to_active_site (Å)."""
-    atoms = _v11_parse_pdb_ca_atoms(pdb_text)
+    atoms = _parse_pdb_ca_atoms(pdb_text)
     if not atoms:
         return pd.DataFrame(columns=[
             "residue_number", "residue_aa", "packing_density", "classification",
@@ -15442,7 +15289,7 @@ def v11_compute_pocket_residues(pdb_text: str,
                 break
         classes[i] = "pocket_lining" if is_lining else "surface"
 
-    # V11.1 SASA proxy: relative burial = packing_density / max(observed
+    # .1 SASA proxy: relative burial = packing_density / max(observed
     # packing). Higher = more buried; lower = more surface-exposed.
     max_density = max(densities) if densities else 1
     rel_burial = [d / max_density if max_density > 0 else 0.0 for d in densities]
@@ -15471,7 +15318,7 @@ def v11_compute_pocket_residues(pdb_text: str,
     return pd.DataFrame(rows)
 
 
-def v11_write_pocket_residues(outdir: Path | str,
+def write_pocket_residues(outdir: Path | str,
                               active_site_positions: Optional[Sequence[int]] = None) -> Optional[Path]:
     """Wrapper: read the human AlphaFold PDB from outdir and write the
     pocket-residue CSV. Returns the path or None if the PDB isn't there."""
@@ -15488,26 +15335,26 @@ def v11_write_pocket_residues(outdir: Path | str,
     if not pdb_path.exists():
         return None
     pdb_text = pdb_path.read_text(encoding="utf-8")
-    df = v11_compute_pocket_residues(pdb_text, active_site_positions=active_site_positions)
+    df = compute_pocket_residues(pdb_text, active_site_positions=active_site_positions)
     if df.empty:
         return None
-    out = outdir / V11_POCKET_RESIDUES_CSV
+    out = outdir / POCKET_RESIDUES_CSV
     df.to_csv(out, index=False)
     return out
 
 
-# ----------------- V11.1 Pairwise species diff framework --------------------#
+# ----------------- .1 Pairwise species diff framework --------------------#
 # User picks two species (`--diff_species A,B`); emits a per-position table
 # of where the two orthologs differ, with structural / regulatory / SDP
 # context cross-referenced. The "print and stare at it" view for a bench
 # scientist comparing e.g. mouse vs human DHRS7.
 # -----------------------------------------------------------------------------
 
-V11_SPECIES_DIFF_CSV_TEMPLATE = "v11_species_diff_{species_a}_vs_{species_b}.csv"
-V11_SPECIES_DIFF_HTML_TEMPLATE = "v11_species_diff_{species_a}_vs_{species_b}.html"
+SPECIES_DIFF_CSV_TEMPLATE = "species_diff_{species_a}_vs_{species_b}.csv"
+SPECIES_DIFF_HTML_TEMPLATE = "species_diff_{species_a}_vs_{species_b}.html"
 
 
-def v11_compute_species_diff(alignment: Any,
+def compute_species_diff(alignment: Any,
                              reference_species: str,
                              species_a: str,
                              species_b: str,
@@ -15529,7 +15376,7 @@ def v11_compute_species_diff(alignment: Any,
             "neutral": set("AVILMFWYCNQSTPG"),
         }
 
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
     ref_seq = str(ref_record.seq).upper()
 
     rec_a = None
@@ -15590,8 +15437,8 @@ def v11_compute_species_diff(alignment: Any,
         aa_a = seq_a[col_idx].upper() if col_idx < len(seq_a) else "-"
         aa_b = seq_b[col_idx].upper() if col_idx < len(seq_b) else "-"
         differs = (aa_a != aa_b) and aa_a not in {"-", "X", "?"} and aa_b not in {"-", "X", "?"}
-        prop_a = _v11_property_class_for_aa(aa_a, prop_scheme) or ""
-        prop_b = _v11_property_class_for_aa(aa_b, prop_scheme) or ""
+        prop_a = _property_class_for_aa(aa_a, prop_scheme) or ""
+        prop_b = _property_class_for_aa(aa_b, prop_scheme) or ""
         prop_changed = bool(prop_a and prop_b and prop_a != prop_b)
         sdp_score = float(sdp_by_pos.get(int(ref_pos), 0.0))
         pocket_row = pocket_by_pos.get(int(ref_pos)) or {}
@@ -15623,7 +15470,7 @@ def v11_compute_species_diff(alignment: Any,
     return pd.DataFrame(rows)
 
 
-def v11_write_species_diff_outputs(outdir: Path | str,
+def write_species_diff_outputs(outdir: Path | str,
                                    alignment: Any,
                                    reference_species: str,
                                    species_a: str,
@@ -15635,9 +15482,9 @@ def v11_write_species_diff_outputs(outdir: Path | str,
                                    gene_label: str = "") -> Optional[Path]:
     """Write the per-position diff CSV + a self-contained scannable HTML
     summary (table + counts; structure context links out to the existing
-    v11_structure_overlay_combined.html). Returns the HTML path."""
+    structure_overlay_combined.html). Returns the HTML path."""
     outdir = Path(outdir)
-    df = v11_compute_species_diff(
+    df = compute_species_diff(
         alignment, reference_species,
         species_a, species_b,
         sdp_df=sdp_df, pocket_df=pocket_df,
@@ -15646,9 +15493,9 @@ def v11_write_species_diff_outputs(outdir: Path | str,
     )
     if df.empty:
         return None
-    safe_a = _v11_re.sub(r"[^A-Za-z0-9_-]+", "_", species_a).strip("_") or "A"
-    safe_b = _v11_re.sub(r"[^A-Za-z0-9_-]+", "_", species_b).strip("_") or "B"
-    csv_out = outdir / V11_SPECIES_DIFF_CSV_TEMPLATE.format(species_a=safe_a, species_b=safe_b)
+    safe_a = _re.sub(r"[^A-Za-z0-9_-]+", "_", species_a).strip("_") or "A"
+    safe_b = _re.sub(r"[^A-Za-z0-9_-]+", "_", species_b).strip("_") or "B"
+    csv_out = outdir / SPECIES_DIFF_CSV_TEMPLATE.format(species_a=safe_a, species_b=safe_b)
     df.to_csv(csv_out, index=False)
 
     # Build a scannable HTML — counts header + sortable table of differing
@@ -15689,7 +15536,7 @@ def v11_write_species_diff_outputs(outdir: Path | str,
         return f'<tr style="background:{bg};">{"".join(cells)}</tr>'
 
     table_rows = "\n".join(_row_cells(r) for _, r in diffs.iterrows())
-    html_path = outdir / V11_SPECIES_DIFF_HTML_TEMPLATE.format(species_a=safe_a, species_b=safe_b)
+    html_path = outdir / SPECIES_DIFF_HTML_TEMPLATE.format(species_a=safe_a, species_b=safe_b)
     html_path.write_text(f"""<!doctype html><html><head><meta charset="utf-8">
 <title>{escape(gene_label or 'gene')} — {escape(species_a)} vs {escape(species_b)} diff</title>
 <style>
@@ -15730,19 +15577,19 @@ def v11_write_species_diff_outputs(outdir: Path | str,
 {table_rows}
 </tbody>
 </table>
-<p class="muted" style="margin-top:18px;">For 3D context open <code>v11_structure_overlay_combined.html</code> in this output folder and toggle "Fish-conserved / rodent-diverged residues" or paste a position into the residue input.</p>
+<p class="muted" style="margin-top:18px;">For 3D context open <code>structure_overlay_combined.html</code> in this output folder and toggle "Fish-conserved / rodent-diverged residues" or paste a position into the residue input.</p>
 </body></html>""", encoding="utf-8")
     return html_path
 
 
-def v11_compute_per_clade_consensus(alignment: Any,
+def compute_per_clade_consensus(alignment: Any,
                                     taxonomy_lookup: Optional[Dict[str, Any]],
                                     reference_species: str) -> pd.DataFrame:
     """Per ungapped reference position, return per-clade consensus residue
     + consensus fraction + count of agreeing residues + total non-gap count.
     Wide: reference_ungapped_position, consensus_<clade>, consensus_frac_<clade>."""
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
-    species_clade = _v11_species_clade_map(alignment, taxonomy_lookup)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
+    species_clade = _species_clade_map(alignment, taxonomy_lookup)
     clade_records: Dict[str, List[Any]] = {}
     for record in alignment:
         clade = species_clade.get(str(record.id), "Unassigned")
@@ -15758,7 +15605,7 @@ def v11_compute_per_clade_consensus(alignment: Any,
             "reference_residue": ref_seq[col_idx] if col_idx < len(ref_seq) else "-",
         }
         for clade, records in clade_records.items():
-            counts: _V11_Counter = _V11_Counter()
+            counts: _Counter = _Counter()
             for rec in records:
                 seq = str(rec.seq)
                 if col_idx < len(seq):
@@ -15778,7 +15625,7 @@ def v11_compute_per_clade_consensus(alignment: Any,
     return pd.DataFrame(rows)
 
 
-def _v11_jsd(p: List[float], q: List[float]) -> float:
+def _jsd(p: List[float], q: List[float]) -> float:
     """Jensen-Shannon divergence in bits. p, q must be same-length probability
     vectors. Returns 0..1 (we report sqrt to get distance in [0, 1])."""
     if not p or not q or len(p) != len(q):
@@ -15795,7 +15642,7 @@ def _v11_jsd(p: List[float], q: List[float]) -> float:
     return float(max(0.0, min(1.0, math.sqrt(max(0.0, jsd)))))
 
 
-def v11_compute_clade_pair_js_divergence(alignment: Any,
+def compute_clade_pair_js_divergence(alignment: Any,
                                          taxonomy_lookup: Optional[Dict[str, Any]],
                                          reference_species: str,
                                          min_clade_count: int = 3) -> pd.DataFrame:
@@ -15805,8 +15652,8 @@ def v11_compute_clade_pair_js_divergence(alignment: Any,
 
     Pairs with either clade having < `min_clade_count` non-gap residues at a
     position are skipped (under-sampled noise)."""
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
-    species_clade = _v11_species_clade_map(alignment, taxonomy_lookup)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
+    species_clade = _species_clade_map(alignment, taxonomy_lookup)
     clade_records: Dict[str, List[Any]] = {}
     for record in alignment:
         clade = species_clade.get(str(record.id), "Unassigned")
@@ -15814,7 +15661,7 @@ def v11_compute_clade_pair_js_divergence(alignment: Any,
     clades_sorted = sorted(clade_records.keys())
 
     def _freq_vector(records: Sequence[Any], col_idx: int) -> Tuple[List[float], int]:
-        counts: _V11_Counter = _V11_Counter()
+        counts: _Counter = _Counter()
         for rec in records:
             seq = str(rec.seq)
             if col_idx < len(seq):
@@ -15823,8 +15670,8 @@ def v11_compute_clade_pair_js_divergence(alignment: Any,
                     counts[aa] += 1
         total = sum(counts.values())
         if total == 0:
-            return [0.0] * len(_V11_AA_ALPHABET), 0
-        return [counts.get(aa, 0) / total for aa in _V11_AA_ALPHABET], total
+            return [0.0] * len(_AA_ALPHABET), 0
+        return [counts.get(aa, 0) / total for aa in _AA_ALPHABET], total
 
     rows: List[Dict[str, Any]] = []
     for col_idx, ref_pos in enumerate(aln_to_ref):
@@ -15841,7 +15688,7 @@ def v11_compute_clade_pair_js_divergence(alignment: Any,
                 pb, nb = freq_cache[clade_b]
                 if nb < min_clade_count:
                     continue
-                jsd = _v11_jsd(pa, pb)
+                jsd = _jsd(pa, pb)
                 rows.append({
                     "reference_ungapped_position": int(ref_pos),
                     "clade_a": clade_a,
@@ -15853,9 +15700,9 @@ def v11_compute_clade_pair_js_divergence(alignment: Any,
     return pd.DataFrame(rows)
 
 
-def v11_compute_lineage_stabilization(entropy_df: pd.DataFrame,
-                                      ancestral_clades: Sequence[str] = V11_DEFAULT_ANCESTRAL_CLADES,
-                                      derived_clades: Sequence[str] = V11_DEFAULT_DERIVED_CLADES,
+def compute_lineage_stabilization(entropy_df: pd.DataFrame,
+                                      ancestral_clades: Sequence[str] = DEFAULT_ANCESTRAL_CLADES,
+                                      derived_clades: Sequence[str] = DEFAULT_DERIVED_CLADES,
                                       min_occupancy: int = 3) -> pd.DataFrame:
     """Stabilization score per reference position:
 
@@ -15916,7 +15763,7 @@ def v11_compute_lineage_stabilization(entropy_df: pd.DataFrame,
 
 # --------------------- motif evolution per species/clade ---------------------#
 
-def _v11_alignment_columns_for_ref_range(aln_to_ref: List[Optional[int]],
+def _alignment_columns_for_ref_range(aln_to_ref: List[Optional[int]],
                                          start_1b: int, end_1b: int) -> List[int]:
     """Return the alignment-column indices (0-based) that map to ref positions
     in [start_1b, end_1b] inclusive."""
@@ -15924,7 +15771,7 @@ def _v11_alignment_columns_for_ref_range(aln_to_ref: List[Optional[int]],
             if rp is not None and start_1b <= rp <= end_1b]
 
 
-def v11_compute_motif_evolution(alignment: Any,
+def compute_motif_evolution(alignment: Any,
                                 motifs_df: pd.DataFrame,
                                 reference_species: str,
                                 taxonomy_lookup: Optional[Dict[str, Any]]) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -15947,8 +15794,8 @@ def v11_compute_motif_evolution(alignment: Any,
                     "consensus_motif", "reference_motif",
                     "fraction_matching_reference", "dominant_alternative"]))
 
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
-    species_clade = _v11_species_clade_map(alignment, taxonomy_lookup)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
+    species_clade = _species_clade_map(alignment, taxonomy_lookup)
 
     per_species_rows: List[Dict[str, Any]] = []
     per_clade_rows: List[Dict[str, Any]] = []
@@ -15958,7 +15805,7 @@ def v11_compute_motif_evolution(alignment: Any,
         end = int(motif["end"])
         motif_id = str(motif["motif_id"])
         label = str(motif.get("label", motif_id))
-        col_idxs = _v11_alignment_columns_for_ref_range(aln_to_ref, start, end)
+        col_idxs = _alignment_columns_for_ref_range(aln_to_ref, start, end)
         if not col_idxs:
             continue
         ref_motif = "".join(
@@ -16014,7 +15861,7 @@ def v11_compute_motif_evolution(alignment: Any,
                 continue
             per_clade_groups.setdefault(row["clade"], []).append(row["motif_residues"])
         for clade, motifs_in_clade in per_clade_groups.items():
-            counts = _V11_Counter(motifs_in_clade)
+            counts = _Counter(motifs_in_clade)
             (best_motif, best_n) = counts.most_common(1)[0] if counts else ("-", 0)
             n_species = len(motifs_in_clade)
             n_match_ref = sum(1 for m in motifs_in_clade if m == ref_motif)
@@ -16043,7 +15890,7 @@ def v11_compute_motif_evolution(alignment: Any,
 # ------------------------- plotting helpers ----------------------------------#
 
 # Coarse amino-acid colour scheme for the motif figures (Lesk-style).
-_V11_AA_COLORS: Dict[str, str] = {
+_AA_COLORS: Dict[str, str] = {
     # Hydrophobic (orange)
     "A": "#f97316", "V": "#f97316", "I": "#f97316", "L": "#f97316", "M": "#f97316",
     # Aromatic (red)
@@ -16060,11 +15907,11 @@ _V11_AA_COLORS: Dict[str, str] = {
 }
 
 
-def _v11_aa_color(aa: str) -> str:
-    return _V11_AA_COLORS.get(str(aa).upper(), "#9ca3af")
+def _aa_color(aa: str) -> str:
+    return _AA_COLORS.get(str(aa).upper(), "#9ca3af")
 
 
-def v11_plot_motif_clade_logos(per_species_df: pd.DataFrame,
+def plot_motif_clade_logos(per_species_df: pd.DataFrame,
                                motif_row: pd.Series,
                                outpath_png: Path,
                                outpath_svg: Path) -> None:
@@ -16094,7 +15941,7 @@ def v11_plot_motif_clade_logos(per_species_df: pd.DataFrame,
         # Frequency per position.
         for pos_idx in range(motif_len):
             col_chars = [m[pos_idx] if pos_idx < len(m) else "-" for m in clade_motifs]
-            counts: _V11_Counter = _V11_Counter(col_chars)
+            counts: _Counter = _Counter(col_chars)
             total = sum(c for aa, c in counts.items() if aa not in GAP_CHARS)
             if total == 0:
                 continue
@@ -16114,7 +15961,7 @@ def v11_plot_motif_clade_logos(per_species_df: pd.DataFrame,
                     continue
                 p = c / total
                 h = p * ic_norm
-                color = _v11_aa_color(aa)
+                color = _aa_color(aa)
                 ax.add_patch(plt.Rectangle((pos_idx, row_idx + cum_y),
                                             1.0, h, facecolor=color,
                                             edgecolor="white", linewidth=0.3, alpha=0.9))
@@ -16129,7 +15976,7 @@ def v11_plot_motif_clade_logos(per_species_df: pd.DataFrame,
     ref_y = len(clades) + 0.3
     for pos_idx, aa in enumerate(ref_motif):
         ax.add_patch(plt.Rectangle((pos_idx, ref_y), 1.0, 0.55,
-                                    facecolor=_v11_aa_color(aa), edgecolor="black",
+                                    facecolor=_aa_color(aa), edgecolor="black",
                                     linewidth=0.4, alpha=0.95))
         ax.text(pos_idx + 0.5, ref_y + 0.27, aa, ha="center", va="center",
                 fontsize=10, color="white", fontweight="bold")
@@ -16145,7 +15992,7 @@ def v11_plot_motif_clade_logos(per_species_df: pd.DataFrame,
     for spine in ("top", "right", "left"):
         ax.spines[spine].set_visible(False)
     ax.spines["bottom"].set_color("#999")
-    ax.set_title(f"V11 motif '{label}' — per-clade sequence logo (ref pos {start}-{int(motif_row['end'])})", fontsize=10)
+    ax.set_title(f"motif '{label}' — per-clade sequence logo (ref pos {start}-{int(motif_row['end'])})", fontsize=10)
     ax.set_xlabel("Reference ungapped position")
     fig.tight_layout()
     fig.savefig(outpath_png, dpi=180)
@@ -16153,14 +16000,14 @@ def v11_plot_motif_clade_logos(per_species_df: pd.DataFrame,
     plt.close(fig)
 
 
-def v11_plot_motif_species_heatmap(per_species_df: pd.DataFrame,
+def plot_motif_species_heatmap(per_species_df: pd.DataFrame,
                                    motif_row: pd.Series,
                                    representatives_df: Optional[pd.DataFrame],
                                    outpath_png: Path,
                                    outpath_svg: Path) -> None:
     """Heatmap for one motif: representative species (rows) × motif positions
     (cols). Cell colour = amino-acid class. Cell label = single-letter code.
-    Matches the V11 representative-comparison aesthetic."""
+    Matches the representative-comparison aesthetic."""
     motif_id = str(motif_row["motif_id"])
     label = str(motif_row.get("label", motif_id))
     motif_data = per_species_df[per_species_df["motif_id"] == motif_id]
@@ -16187,7 +16034,7 @@ def v11_plot_motif_species_heatmap(per_species_df: pd.DataFrame,
     for row_idx, (_, row) in enumerate(focus.iterrows()):
         residues = str(row["motif_residues"])
         for pos_idx, aa in enumerate(residues):
-            color = _v11_aa_color(aa)
+            color = _aa_color(aa)
             ax.add_patch(plt.Rectangle((pos_idx, row_idx), 1.0, 1.0,
                                         facecolor=color, edgecolor="white", linewidth=0.4))
             ax.text(pos_idx + 0.5, row_idx + 0.5, aa, ha="center", va="center",
@@ -16196,7 +16043,7 @@ def v11_plot_motif_species_heatmap(per_species_df: pd.DataFrame,
     ref_y = len(focus) + 0.4
     for pos_idx, aa in enumerate(ref_motif):
         ax.add_patch(plt.Rectangle((pos_idx, ref_y), 1.0, 0.7,
-                                    facecolor=_v11_aa_color(aa), edgecolor="black", linewidth=0.5))
+                                    facecolor=_aa_color(aa), edgecolor="black", linewidth=0.5))
         ax.text(pos_idx + 0.5, ref_y + 0.35, aa, ha="center", va="center",
                 fontsize=9, color="white", fontweight="bold")
 
@@ -16213,7 +16060,7 @@ def v11_plot_motif_species_heatmap(per_species_df: pd.DataFrame,
     ax.set_ylim(-0.2, ref_y + 1.2)
     for spine in ("top", "right", "left"):
         ax.spines[spine].set_visible(False)
-    ax.set_title(f"V11 motif '{label}' — representative species residues (ref pos {start}-{int(motif_row['end'])})", fontsize=10)
+    ax.set_title(f"motif '{label}' — representative species residues (ref pos {start}-{int(motif_row['end'])})", fontsize=10)
     ax.set_xlabel("Reference ungapped position")
     fig.tight_layout()
     fig.savefig(outpath_png, dpi=180)
@@ -16221,7 +16068,7 @@ def v11_plot_motif_species_heatmap(per_species_df: pd.DataFrame,
     plt.close(fig)
 
 
-def v11_plot_lineage_stabilization_landscape(stabilization_df: pd.DataFrame,
+def plot_lineage_stabilization_landscape(stabilization_df: pd.DataFrame,
                                               motifs_df: pd.DataFrame,
                                               outpath_png: Path,
                                               outpath_svg: Path,
@@ -16251,7 +16098,7 @@ def v11_plot_lineage_stabilization_landscape(stabilization_df: pd.DataFrame,
     ax_score.bar(positions, scores, color=colours, width=1.0, linewidth=0)
     ax_score.axhline(0.0, color="#999", lw=0.6)
     ax_score.set_ylabel("Stabilization\nscore (bits)\n← ancestral | derived →", fontsize=9)
-    ax_score.set_title("V11 lineage stabilization landscape — ancestral vs derived clades",
+    ax_score.set_title("lineage stabilization landscape — ancestral vs derived clades",
                         fontsize=11, pad=8)
     for spine in ("top", "right"):
         ax_score.spines[spine].set_visible(False)
@@ -16294,14 +16141,13 @@ def v11_plot_lineage_stabilization_landscape(stabilization_df: pd.DataFrame,
     plt.close(fig)
 
 
-def v11_render_alignment_with_motif_annotations(outdir: Path,
+def render_alignment_with_motif_annotations(outdir: Path,
                                                  motifs_df: pd.DataFrame,
                                                  representatives_df: pd.DataFrame,
                                                  reference_species: str,
                                                  per_species_df: pd.DataFrame,
                                                  alignment: Any) -> Optional[Path]:
-    """Render a single SVG showing the projected MUSCLE alignment for the V11
-    representative species with colored rectangles overlaid on motif hits.
+    """Render a single SVG showing the projected MUSCLE alignment for the representative species with colored rectangles overlaid on motif hits.
 
     The figure has one row per representative species (plus a top row for the
     human reference) and one column per ungapped reference position. Cells
@@ -16312,7 +16158,7 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
     tooltips (hover anywhere over the box → see per-clade consensus)."""
     if representatives_df is None or representatives_df.empty:
         return None
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
     rep_records = list(representatives_df["record_id"].astype(str))
     species_order = list(representatives_df["species"])
     clade_lookup = dict(zip(representatives_df["record_id"].astype(str), representatives_df["clade"]))
@@ -16341,7 +16187,7 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
     parts: List[str] = []
     parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{svg_w}" height="{svg_h}" font-family="Consolas,monospace" font-size="11">')
     parts.append('<rect width="100%" height="100%" fill="#fffaf3"/>')
-    parts.append(f'<text x="20" y="24" font-size="14" font-weight="bold" fill="#14213d">V11 reference-projected alignment with motif annotations</text>')
+    parts.append(f'<text x="20" y="24" font-size="14" font-weight="bold" fill="#14213d">reference-projected alignment with motif annotations</text>')
     parts.append(f'<text x="20" y="42" font-size="10" fill="#5f6b7a">Reference = {escape(reference_species)} ; representatives bolded ; motif hits boxed (teal=user, amber=library)</text>')
 
     motifs_sorted = motifs_df.sort_values(["start", "end"]).reset_index(drop=True) if (motifs_df is not None and not motifs_df.empty) else pd.DataFrame()
@@ -16374,7 +16220,7 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
         parts.append(f'<text x="200" y="{y + 11}" text-anchor="end" font-size="10" font-weight="bold" fill="#14213d">Reference (human)</text>')
         for i in range(block_start, block_end):
             aa = ref_residues[i]
-            color = _v11_aa_color(aa)
+            color = _aa_color(aa)
             x = 220 + (i - block_start) * cell_w
             parts.append(f'<rect x="{x}" y="{y}" width="{cell_w}" height="{cell_h}" fill="{color}" fill-opacity="0.25"/>')
             parts.append(f'<text x="{x + cell_w / 2}" y="{y + 11}" text-anchor="middle" fill="#14213d">{escape(aa)}</text>')
@@ -16406,7 +16252,7 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
     parts = []  # restart parts cleanly with the proper second pass
     parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{svg_w}" height="{svg_h}" font-family="Consolas,monospace" font-size="11">')
     parts.append('<rect width="100%" height="100%" fill="#fffaf3"/>')
-    parts.append(f'<text x="20" y="24" font-size="14" font-weight="bold" fill="#14213d">V11 reference-projected alignment with motif annotations</text>')
+    parts.append(f'<text x="20" y="24" font-size="14" font-weight="bold" fill="#14213d">reference-projected alignment with motif annotations</text>')
     parts.append(f'<text x="20" y="42" font-size="10" fill="#5f6b7a">Reference = {escape(reference_species)} ; representatives bolded ; motif hits boxed (teal=user, amber=library)</text>')
 
     # Pre-extract every record's ungapped-projected sequence (one residue per
@@ -16451,7 +16297,7 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
         parts.append(f'<text x="200" y="{y + 11}" text-anchor="end" font-size="10" font-weight="bold" fill="#14213d">Reference (human)</text>')
         for i in range(block_start, block_end):
             aa = ref_residues[i]
-            color = _v11_aa_color(aa)
+            color = _aa_color(aa)
             x = 220 + (i - block_start) * cell_w
             parts.append(f'<rect x="{x}" y="{y}" width="{cell_w}" height="{cell_h}" fill="{color}" fill-opacity="0.25"/>')
             parts.append(f'<text x="{x + cell_w / 2}" y="{y + 11}" text-anchor="middle" fill="#14213d">{escape(aa)}</text>')
@@ -16467,7 +16313,7 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
                 if i >= len(seq):
                     break
                 aa = seq[i]
-                color = _v11_aa_color(aa)
+                color = _aa_color(aa)
                 x = 220 + (i - block_start) * cell_w
                 # Highlight identity to reference with stronger background.
                 ref_aa = ref_residues[i]
@@ -16477,18 +16323,18 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
 
     parts.append('</svg>')
 
-    svg_path = outdir / V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG
+    svg_path = outdir / ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG
     svg_path.write_text("\n".join(parts), encoding="utf-8")
 
-    html_path = outdir / V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_HTML
+    html_path = outdir / ALIGNMENT_WITH_MOTIF_ANNOTATIONS_HTML
     html_content = (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-        "<title>V11 alignment with motif annotations</title>"
+        "<title>alignment with motif annotations</title>"
         "<style>body{margin:0;padding:14px;background:#f4efe4;font-family:Segoe UI,Tahoma,sans-serif;}"
         "h1{font-size:1.2rem;color:#14213d;}p{color:#5f6b7a;}svg{display:block;background:#fffaf3;}</style></head>"
-        "<body><h1>V11 reference-projected alignment with motif annotations</h1>"
+        "<body><h1>reference-projected alignment with motif annotations</h1>"
         "<p>Teal boxes: user-supplied motifs (<code>--annotated_motifs</code>). "
-        "Amber boxes: hits from the V11 regulatory-motif regex library. "
+        "Amber boxes: hits from the regulatory-motif regex library. "
         "Hover any box to see its label and ref-position span.</p>"
         + "\n".join(parts) +
         "</body></html>"
@@ -16499,53 +16345,53 @@ def v11_render_alignment_with_motif_annotations(outdir: Path,
 
 # ---------------------- main orchestrator -------------------------------------#
 
-def v11_write_motif_analysis_outputs(outdir: Path | str,
+def write_motif_analysis_outputs(outdir: Path | str,
                                      alignment: Any,
                                      reference_species: str,
                                      taxonomy_lookup: Optional[Dict[str, Any]] = None,
                                      annotated_motifs_text: Optional[str] = None,
                                      extra_motif_regex_text: Optional[str] = None,
-                                     ancestral_clades: Sequence[str] = V11_DEFAULT_ANCESTRAL_CLADES,
-                                     derived_clades: Sequence[str] = V11_DEFAULT_DERIVED_CLADES,
+                                     ancestral_clades: Sequence[str] = DEFAULT_ANCESTRAL_CLADES,
+                                     derived_clades: Sequence[str] = DEFAULT_DERIVED_CLADES,
                                      representatives_df: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
-    """End-to-end V11 motif & lineage-stabilization orchestrator. Produces
-    every artifact described in the V11 README's motif section. Returns a
+    """End-to-end motif & lineage-stabilization orchestrator. Produces
+    every artifact described in the README's motif section. Returns a
     summary dict (for pipeline-step logging)."""
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
     # --- Parse user / library motifs and union them.
-    user_df = v11_parse_annotated_motifs(annotated_motifs_text)
-    extra_regex = v11_parse_extra_motif_regex(extra_motif_regex_text)
-    _, ref_record = _v11_ref_position_records(alignment, reference_species)
+    user_df = parse_annotated_motifs(annotated_motifs_text)
+    extra_regex = parse_extra_motif_regex(extra_motif_regex_text)
+    _, ref_record = _ref_position_records(alignment, reference_species)
     ref_ungapped = "".join(a for a in str(ref_record.seq).upper() if a not in GAP_CHARS)
-    library_df = v11_scan_motif_library(ref_ungapped, V11_REGULATORY_MOTIF_LIBRARY, extra_regex)
-    motifs_master = v11_merge_motif_tables(user_df, library_df)
+    library_df = scan_motif_library(ref_ungapped, REGULATORY_MOTIF_LIBRARY, extra_regex)
+    motifs_master = merge_motif_tables(user_df, library_df)
 
-    user_df.to_csv(outdir / V11_ANNOTATED_MOTIFS_TSV, sep="\t", index=False)
-    library_df.to_csv(outdir / V11_MOTIF_LIBRARY_HITS_TSV, sep="\t", index=False)
-    motifs_master.to_csv(outdir / V11_MOTIFS_MASTER_TSV, sep="\t", index=False)
+    user_df.to_csv(outdir / ANNOTATED_MOTIFS_TSV, sep="\t", index=False)
+    library_df.to_csv(outdir / MOTIF_LIBRARY_HITS_TSV, sep="\t", index=False)
+    motifs_master.to_csv(outdir / MOTIFS_MASTER_TSV, sep="\t", index=False)
 
     # --- Per-clade entropy / consensus.
-    entropy_df = v11_compute_per_clade_entropy(alignment, taxonomy_lookup, reference_species)
-    entropy_df.to_csv(outdir / V11_PER_CLADE_ENTROPY_CSV, index=False)
-    consensus_df = v11_compute_per_clade_consensus(alignment, taxonomy_lookup, reference_species)
-    consensus_df.to_csv(outdir / V11_PER_CLADE_CONSENSUS_CSV, index=False)
+    entropy_df = compute_per_clade_entropy(alignment, taxonomy_lookup, reference_species)
+    entropy_df.to_csv(outdir / PER_CLADE_ENTROPY_CSV, index=False)
+    consensus_df = compute_per_clade_consensus(alignment, taxonomy_lookup, reference_species)
+    consensus_df.to_csv(outdir / PER_CLADE_CONSENSUS_CSV, index=False)
 
     # --- Clade-pair JS divergence (long format).
-    js_df = v11_compute_clade_pair_js_divergence(alignment, taxonomy_lookup, reference_species)
-    js_df.to_csv(outdir / V11_CLADE_PAIR_JS_DIVERGENCE_CSV, index=False)
+    js_df = compute_clade_pair_js_divergence(alignment, taxonomy_lookup, reference_species)
+    js_df.to_csv(outdir / CLADE_PAIR_JS_DIVERGENCE_CSV, index=False)
 
     # --- Lineage stabilization score.
-    stab_df = v11_compute_lineage_stabilization(entropy_df, ancestral_clades, derived_clades)
-    stab_df.to_csv(outdir / V11_LINEAGE_STABILIZATION_CSV, index=False)
+    stab_df = compute_lineage_stabilization(entropy_df, ancestral_clades, derived_clades)
+    stab_df.to_csv(outdir / LINEAGE_STABILIZATION_CSV, index=False)
 
     # --- Motif evolution tables.
-    per_species_df, per_clade_df = v11_compute_motif_evolution(
+    per_species_df, per_clade_df = compute_motif_evolution(
         alignment, motifs_master, reference_species, taxonomy_lookup
     )
-    per_species_df.to_csv(outdir / V11_MOTIF_EVOLUTION_PER_SPECIES_TSV, sep="\t", index=False)
-    per_clade_df.to_csv(outdir / V11_MOTIF_EVOLUTION_PER_CLADE_TSV, sep="\t", index=False)
+    per_species_df.to_csv(outdir / MOTIF_EVOLUTION_PER_SPECIES_TSV, sep="\t", index=False)
+    per_clade_df.to_csv(outdir / MOTIF_EVOLUTION_PER_CLADE_TSV, sep="\t", index=False)
 
     # --- Per-motif figures (logos + species heatmap). Only render for motifs
     # the user explicitly supplied OR a handful of "interesting" library hits
@@ -16560,12 +16406,12 @@ def v11_write_motif_analysis_outputs(outdir: Path | str,
         library_rows = library_rows.sort_values("_len", ascending=False).head(12)
     for _, row in pd.concat([user_motif_rows, library_rows], ignore_index=True).iterrows():
         motif_id = str(row["motif_id"])
-        logo_png = outdir / f"v11_motif_{motif_id}_clade_logos.png"
-        logo_svg = outdir / f"v11_motif_{motif_id}_clade_logos.svg"
-        v11_plot_motif_clade_logos(per_species_df, row, logo_png, logo_svg)
-        heat_png = outdir / f"v11_motif_{motif_id}_species_heatmap.png"
-        heat_svg = outdir / f"v11_motif_{motif_id}_species_heatmap.svg"
-        v11_plot_motif_species_heatmap(per_species_df, row, representatives_df, heat_png, heat_svg)
+        logo_png = outdir / f"motif_{motif_id}_clade_logos.png"
+        logo_svg = outdir / f"motif_{motif_id}_clade_logos.svg"
+        plot_motif_clade_logos(per_species_df, row, logo_png, logo_svg)
+        heat_png = outdir / f"motif_{motif_id}_species_heatmap.png"
+        heat_svg = outdir / f"motif_{motif_id}_species_heatmap.svg"
+        plot_motif_species_heatmap(per_species_df, row, representatives_df, heat_png, heat_svg)
         if logo_svg.exists():
             motif_figure_paths.append(str(logo_svg))
         if heat_svg.exists():
@@ -16584,10 +16430,10 @@ def v11_write_motif_analysis_outputs(outdir: Path | str,
         js_top = pd.DataFrame(columns=["reference_ungapped_position", "clade_a", "clade_b", "js_divergence"])
 
     # --- Landscape figure.
-    landscape_png = outdir / V11_LINEAGE_STABILIZATION_LANDSCAPE_PNG
-    landscape_svg = outdir / V11_LINEAGE_STABILIZATION_LANDSCAPE_SVG
+    landscape_png = outdir / LINEAGE_STABILIZATION_LANDSCAPE_PNG
+    landscape_svg = outdir / LINEAGE_STABILIZATION_LANDSCAPE_SVG
     if not stab_df.empty:
-        v11_plot_lineage_stabilization_landscape(
+        plot_lineage_stabilization_landscape(
             stab_df, motifs_master, landscape_png, landscape_svg,
             max_position=int(stab_df["reference_ungapped_position"].max()),
             js_top_df=js_top,
@@ -16596,7 +16442,7 @@ def v11_write_motif_analysis_outputs(outdir: Path | str,
     # --- Annotated alignment SVG/HTML.
     if representatives_df is not None and not representatives_df.empty:
         try:
-            v11_render_alignment_with_motif_annotations(
+            render_alignment_with_motif_annotations(
                 outdir, motifs_master, representatives_df, reference_species,
                 per_species_df, alignment,
             )
@@ -16616,13 +16462,13 @@ def v11_write_motif_analysis_outputs(outdir: Path | str,
         "ancestral_clades": list(ancestral_clades),
         "derived_clades": list(derived_clades),
         "landscape_svg": str(landscape_svg) if landscape_svg.exists() else None,
-        "annotated_alignment_svg": str(outdir / V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG)
-            if (outdir / V11_ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG).exists() else None,
+        "annotated_alignment_svg": str(outdir / ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG)
+            if (outdir / ALIGNMENT_WITH_MOTIF_ANNOTATIONS_SVG).exists() else None,
     }
 
 
 # =============================================================================
-# V11 per-clade consolidated summary (default)                                 #
+# per-clade consolidated summary (default)                                     #
 # -----------------------------------------------------------------------------#
 # A single default view that, for EVERY represented vertebrate clade, overlays #
 # the three things that matter together along the human reference axis:        #
@@ -16635,16 +16481,16 @@ def v11_write_motif_analysis_outputs(outdir: Path | str,
 # clade-bubble reference/charge figure.                                        #
 # =============================================================================
 
-V11_PER_CLADE_SS_CSV = "v11_per_clade_secondary_structure.csv"
-V11_PER_CLADE_NET_CHARGE_CSV = "v11_per_clade_net_charge.csv"
-V11_CLADE_CONSOLIDATED_SUMMARY_PNG = "v11_clade_consolidated_summary.png"
-V11_CLADE_CONSOLIDATED_SUMMARY_SVG = "v11_clade_consolidated_summary.svg"
+PER_CLADE_SS_CSV = "per_clade_secondary_structure.csv"
+PER_CLADE_NET_CHARGE_CSV = "per_clade_net_charge.csv"
+CLADE_CONSOLIDATED_SUMMARY_PNG = "clade_consolidated_summary.png"
+CLADE_CONSOLIDATED_SUMMARY_SVG = "clade_consolidated_summary.svg"
 
-_V11_SS_COLORS = {"helix": "#dc2626", "sheet": "#7c3aed", "loop": "#cbd5e1"}
+_SS_COLORS = {"helix": "#dc2626", "sheet": "#7c3aed", "loop": "#cbd5e1"}
 
 # Preferred vertebrate clade ordering (basal → derived) for the consolidated
 # figure; clades not listed fall to the end alphabetically.
-_V11_CLADE_DISPLAY_ORDER = (
+_CLADE_DISPLAY_ORDER = (
     "Cyclostomata", "Chondrichthyes", "Polypteriformes", "Chondrostei",
     "Holostei", "Teleostei", "Coelacanthiformes", "Dipnoi",
     "Amphibia", "Reptilia", "Aves", "Mammalia",
@@ -16652,14 +16498,14 @@ _V11_CLADE_DISPLAY_ORDER = (
 )
 
 
-def _v11_clade_sort_key(clade: str):
+def _clade_sort_key(clade: str):
     try:
-        return (0, _V11_CLADE_DISPLAY_ORDER.index(clade))
+        return (0, _CLADE_DISPLAY_ORDER.index(clade))
     except ValueError:
         return (1, clade)
 
 
-def v11_compute_per_clade_secondary_structure(outdir: Path | str,
+def compute_per_clade_secondary_structure(outdir: Path | str,
                                               taxonomy_lookup: Optional[Dict[str, Any]],
                                               reference_species: str) -> pd.DataFrame:
     """Aggregate the comparative AlphaFold SS bundle into a per-clade consensus
@@ -16685,16 +16531,16 @@ def v11_compute_per_clade_secondary_structure(outdir: Path | str,
         return pd.DataFrame()
 
     # position (1-based) -> clade -> Counter of ss states.
-    counts: Dict[int, Dict[str, "_V11_Counter"]] = {}
+    counts: Dict[int, Dict[str, "_Counter"]] = {}
     clade_species_seen: Dict[str, set] = {}
     for rec in records:
         species = str(rec.get("species") or "")
-        tax = _v11_resolve_taxonomy_level(taxonomy_lookup, species) if taxonomy_lookup is not None else ""
-        clade = v11_resolve_broad_clade(species, tax) or "Unassigned"
+        tax = _resolve_taxonomy_level(taxonomy_lookup, species) if taxonomy_lookup is not None else ""
+        clade = resolve_broad_clade(species, tax) or "Unassigned"
         clade_species_seen.setdefault(clade, set()).add(rec.get("record_id") or species)
         for rng in (rec.get("mapped_ranges") or []):
             kind = str(rng.get("secondary_structure") or rng.get("kind") or "loop").lower()
-            if kind not in _V11_SS_COLORS:
+            if kind not in _SS_COLORS:
                 kind = "loop"
             try:
                 start = int(rng.get("start_reference_position") or rng.get("start"))
@@ -16702,7 +16548,7 @@ def v11_compute_per_clade_secondary_structure(outdir: Path | str,
             except (TypeError, ValueError):
                 continue
             for pos in range(start, end + 1):
-                counts.setdefault(pos, {}).setdefault(clade, _V11_Counter())[kind] += 1
+                counts.setdefault(pos, {}).setdefault(clade, _Counter())[kind] += 1
 
     rows: List[Dict[str, Any]] = []
     for pos in range(1, track_length + 1):
@@ -16728,17 +16574,17 @@ def v11_compute_per_clade_secondary_structure(outdir: Path | str,
     return pd.DataFrame(rows)
 
 
-def v11_compute_per_clade_net_charge(alignment: Any,
+def compute_per_clade_net_charge(alignment: Any,
                                      taxonomy_lookup: Optional[Dict[str, Any]],
                                      reference_species: str,
-                                     smoothing_window: int = V11_DEFAULT_PROPERTY_WINDOW) -> pd.DataFrame:
+                                     smoothing_window: int = DEFAULT_PROPERTY_WINDOW) -> pd.DataFrame:
     """Mean net charge (pH 7.4, smoothed) per clade per reference position.
 
     Wide: reference_ungapped_position + mean_charge_<clade> columns, plus a
     parallel n_<clade> count set. Built by averaging the per-species net-charge
     track within each broad clade."""
-    per_species = v11_compute_per_species_property_track(
-        alignment, V11_RESIDUE_NET_CHARGE_PH74, reference_species=reference_species,
+    per_species = compute_per_species_property_track(
+        alignment, RESIDUE_NET_CHARGE_PH74, reference_species=reference_species,
         smoothing_window=smoothing_window,
     )
     if per_species.empty:
@@ -16746,8 +16592,8 @@ def v11_compute_per_clade_net_charge(alignment: Any,
     species_clade = {}
     for rec_id in per_species["record_id"]:
         species = str(rec_id).split("|", 1)[0].strip()
-        tax = _v11_resolve_taxonomy_level(taxonomy_lookup, species) if taxonomy_lookup is not None else ""
-        species_clade[rec_id] = v11_resolve_broad_clade(species, tax) or "Unassigned"
+        tax = _resolve_taxonomy_level(taxonomy_lookup, species) if taxonomy_lookup is not None else ""
+        species_clade[rec_id] = resolve_broad_clade(species, tax) or "Unassigned"
     per_species = per_species.copy()
     per_species["clade"] = per_species["record_id"].map(species_clade)
     pos_cols = [c for c in per_species.columns if c.startswith("pos_")]
@@ -16765,7 +16611,7 @@ def v11_compute_per_clade_net_charge(alignment: Any,
     return pd.DataFrame(out_rows)
 
 
-def _v11_load_reference_domains(outdir: Path) -> List[Dict[str, Any]]:
+def _load_reference_domains(outdir: Path) -> List[Dict[str, Any]]:
     """Best-effort load of reference domain spans from domains.tsv for the
     consolidated figure's top band. Returns [{label, start, end}]."""
     path = outdir / "domains.tsv"
@@ -16799,7 +16645,7 @@ def _v11_load_reference_domains(outdir: Path) -> List[Dict[str, Any]]:
     return spans
 
 
-def v11_plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
+def plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
                                         per_clade_charge: pd.DataFrame,
                                         domain_spans: List[Dict[str, Any]],
                                         reference_species: str,
@@ -16819,7 +16665,7 @@ def v11_plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
     if not per_clade_charge.empty:
         clades |= {c[len("mean_charge_"):] for c in per_clade_charge.columns if c.startswith("mean_charge_")}
     clades = [c for c in clades if c]
-    clades.sort(key=_v11_clade_sort_key)
+    clades.sort(key=_clade_sort_key)
     if not clades:
         return
 
@@ -16857,7 +16703,7 @@ def v11_plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
                     if run_kind is not None and run_start is not None:
                         ax.add_patch(Rectangle(
                             (run_start - 0.5, y0 + 0.12), (pos - run_start), row_h - 0.5,
-                            facecolor=_V11_SS_COLORS.get(run_kind, "#cbd5e1"),
+                            facecolor=_SS_COLORS.get(run_kind, "#cbd5e1"),
                             edgecolor="none", alpha=0.85, zorder=2))
                     run_start = pos
                     run_kind = kind
@@ -16877,7 +16723,7 @@ def v11_plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
         if not per_clade_charge.empty and f"n_{clade}" in per_clade_charge.columns:
             n_sp = f" (n={int(per_clade_charge[f'n_{clade}'].iloc[0])})"
         ax.text(-0.012 * track_len, y0 + 0.5, f"{clade}{n_sp}", ha="right", va="center",
-                fontsize=9, color=_v11_clade_color(clade), fontweight="bold")
+                fontsize=9, color=_clade_color(clade), fontweight="bold")
 
     # Domain architecture band on top.
     top_y = n + 0.25
@@ -16918,9 +16764,9 @@ def v11_plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
     handles = [
-        Patch(facecolor=_V11_SS_COLORS["helix"], label="Consensus helix", alpha=0.85),
-        Patch(facecolor=_V11_SS_COLORS["sheet"], label="Consensus sheet", alpha=0.85),
-        Patch(facecolor=_V11_SS_COLORS["loop"], label="Consensus loop", alpha=0.85),
+        Patch(facecolor=_SS_COLORS["helix"], label="Consensus helix", alpha=0.85),
+        Patch(facecolor=_SS_COLORS["sheet"], label="Consensus sheet", alpha=0.85),
+        Patch(facecolor=_SS_COLORS["loop"], label="Consensus loop", alpha=0.85),
         Line2D([0], [0], color="#111827", lw=1.0, label="Mean net charge (pH 7.4, clipped ±1)"),
         Patch(facecolor="#0f766e", alpha=0.30, label="Reference domain"),
     ]
@@ -16932,32 +16778,32 @@ def v11_plot_clade_consolidated_summary(per_clade_ss: pd.DataFrame,
     plt.close(fig)
 
 
-def v11_write_clade_consolidated_outputs(outdir: Path | str,
+def write_clade_consolidated_outputs(outdir: Path | str,
                                          alignment: Any,
                                          reference_species: str,
                                          gene_label: str,
                                          taxonomy_lookup: Optional[Dict[str, Any]] = None,
-                                         smoothing_window: int = V11_DEFAULT_PROPERTY_WINDOW) -> Dict[str, Any]:
+                                         smoothing_window: int = DEFAULT_PROPERTY_WINDOW) -> Dict[str, Any]:
     """Default per-clade consolidated analysis: consensus SS + mean net charge
     + domains for every represented clade. Writes CSVs + one combined figure."""
     outdir = Path(outdir)
-    ss_df = v11_compute_per_clade_secondary_structure(outdir, taxonomy_lookup, reference_species)
-    ss_df.to_csv(outdir / V11_PER_CLADE_SS_CSV, index=False)
-    charge_df = v11_compute_per_clade_net_charge(alignment, taxonomy_lookup, reference_species, smoothing_window)
-    charge_df.to_csv(outdir / V11_PER_CLADE_NET_CHARGE_CSV, index=False)
-    domain_spans = _v11_load_reference_domains(outdir)
+    ss_df = compute_per_clade_secondary_structure(outdir, taxonomy_lookup, reference_species)
+    ss_df.to_csv(outdir / PER_CLADE_SS_CSV, index=False)
+    charge_df = compute_per_clade_net_charge(alignment, taxonomy_lookup, reference_species, smoothing_window)
+    charge_df.to_csv(outdir / PER_CLADE_NET_CHARGE_CSV, index=False)
+    domain_spans = _load_reference_domains(outdir)
 
-    png = outdir / V11_CLADE_CONSOLIDATED_SUMMARY_PNG
-    svg = outdir / V11_CLADE_CONSOLIDATED_SUMMARY_SVG
+    png = outdir / CLADE_CONSOLIDATED_SUMMARY_PNG
+    svg = outdir / CLADE_CONSOLIDATED_SUMMARY_SVG
     try:
-        v11_plot_clade_consolidated_summary(
+        plot_clade_consolidated_summary(
             ss_df, charge_df, domain_spans, reference_species, gene_label, png, svg)
     except Exception as exc:  # noqa: BLE001
         return {"error": f"clade consolidated figure failed: {exc}",
                 "per_clade_ss_rows": int(len(ss_df)),
                 "per_clade_charge_rows": int(len(charge_df))}
 
-    clades = sorted(set(ss_df["clade"].unique()) if not ss_df.empty else set(), key=_v11_clade_sort_key)
+    clades = sorted(set(ss_df["clade"].unique()) if not ss_df.empty else set(), key=_clade_sort_key)
     return {
         "per_clade_ss_rows": int(len(ss_df)),
         "per_clade_charge_rows": int(len(charge_df)),
@@ -16969,7 +16815,7 @@ def v11_write_clade_consolidated_outputs(outdir: Path | str,
 
 
 # =============================================================================
-# V11 interactive 3D structure overlay (3Dmol.js)                              #
+# interactive 3D structure overlay (3Dmol.js)                                  #
 # -----------------------------------------------------------------------------#
 # Emits the per-clade identity CSV in the format consumed by the standalone    #
 # build_structure_overlay.py viewer (one *_IdentityFraction / *_CoveredSpecies #
@@ -16979,39 +16825,39 @@ def v11_write_clade_consolidated_outputs(outdir: Path | str,
 # onto the human reference AlphaFold model. Gene-agnostic.                     #
 # =============================================================================
 
-V11_STRUCTURE_OVERLAY_CSV = "v11_clade_identity_by_reference_position.csv"
-V11_STRUCTURE_OVERLAY_HTML = "v11_structure_overlay.html"
-V11_CLADE_IDENTITY_BUBBLE_PNG = "v11_clade_identity_bubble.png"
-V11_CLADE_IDENTITY_BUBBLE_SVG = "v11_clade_identity_bubble.svg"
-V11_CLADE_IDENTITY_BUBBLE_PDF = "v11_clade_identity_bubble.pdf"
+STRUCTURE_OVERLAY_CSV = "clade_identity_by_reference_position.csv"
+STRUCTURE_OVERLAY_HTML = "structure_overlay.html"
+CLADE_IDENTITY_BUBBLE_PNG = "clade_identity_bubble.png"
+CLADE_IDENTITY_BUBBLE_SVG = "clade_identity_bubble.svg"
+CLADE_IDENTITY_BUBBLE_PDF = "clade_identity_bubble.pdf"
 # Subdivided 9-group clade analysis (Primates/Rodents/OtherMammals/Teleosts/
 # OtherFish/Birds/Reptiles/Amphibians/OtherVertebrates). Originally a MATLAB
 # clade-analysis grouping; reimplemented in Python so it runs for any gene.
-V11_GROUPED_CLADE_IDENTITY_CSV = "v11_clade_identity_by_reference_position_9group.csv"
-V11_GROUPED_CLADE_IDENTITY_BUBBLE_PNG = "v11_clade_identity_bubble_9group.png"
-V11_GROUPED_CLADE_IDENTITY_BUBBLE_SVG = "v11_clade_identity_bubble_9group.svg"
-V11_GROUPED_CLADE_IDENTITY_BUBBLE_PDF = "v11_clade_identity_bubble_9group.pdf"
-V11_GROUPED_STRUCTURE_OVERLAY_HTML = "v11_structure_overlay_9group.html"
+GROUPED_CLADE_IDENTITY_CSV = "clade_identity_by_reference_position_9group.csv"
+GROUPED_CLADE_IDENTITY_BUBBLE_PNG = "clade_identity_bubble_9group.png"
+GROUPED_CLADE_IDENTITY_BUBBLE_SVG = "clade_identity_bubble_9group.svg"
+GROUPED_CLADE_IDENTITY_BUBBLE_PDF = "clade_identity_bubble_9group.pdf"
+GROUPED_STRUCTURE_OVERLAY_HTML = "structure_overlay_9group.html"
 # Mirror of the user's MATLAB-era reference CSV: exact column names
 # (Primates, Rodents, OtherMammals, Teleosts, Birds, Reptiles, Amphibians,
 # Other, x), same row layout. Filename matches the user's reference too so
 # tooling that consumed clade_identity_by_reference_position_mod.csv works.
-V11_MOD_CLADE_IDENTITY_CSV = "v11_clade_identity_by_reference_position_mod.csv"
-V11_MOD_CLADE_IDENTITY_BUBBLE_PNG = "v11_clade_identity_bubble_mod.png"
-V11_MOD_CLADE_IDENTITY_BUBBLE_SVG = "v11_clade_identity_bubble_mod.svg"
-V11_MOD_CLADE_IDENTITY_BUBBLE_PDF = "v11_clade_identity_bubble_mod.pdf"
-V11_MOD_STRUCTURE_OVERLAY_HTML = "v11_structure_overlay_mod.html"
+MOD_CLADE_IDENTITY_CSV = "clade_identity_by_reference_position_mod.csv"
+MOD_CLADE_IDENTITY_BUBBLE_PNG = "clade_identity_bubble_mod.png"
+MOD_CLADE_IDENTITY_BUBBLE_SVG = "clade_identity_bubble_mod.svg"
+MOD_CLADE_IDENTITY_BUBBLE_PDF = "clade_identity_bubble_mod.pdf"
+MOD_STRUCTURE_OVERLAY_HTML = "structure_overlay_mod.html"
 # Combined viewer that exposes broad clades + 9-group subdivisions + the
 # compact 9-group "mod" groups as selectable rows in a single 3Dmol dropdown,
 # so the user can pick any bucket to shade the structure without switching
 # overlay files.
-V11_COMBINED_CLADE_IDENTITY_CSV = "v11_clade_identity_by_reference_position_combined.csv"
-V11_COMBINED_STRUCTURE_OVERLAY_HTML = "v11_structure_overlay_combined.html"
+COMBINED_CLADE_IDENTITY_CSV = "clade_identity_by_reference_position_combined.csv"
+COMBINED_STRUCTURE_OVERLAY_HTML = "structure_overlay_combined.html"
 
 
 # Display order for the bubble grid: most-conserved (mammals) at top, basal /
 # non-vertebrate clades at the bottom — echoing the MATLAB figure's layout.
-_V11_BUBBLE_CLADE_ORDER = (
+_BUBBLE_CLADE_ORDER = (
     "Mammalia", "Aves", "Reptilia", "Amphibia",
     "Coelacanthiformes", "Dipnoi", "Teleostei", "Holostei",
     "Polypteriformes", "Chondrostei", "Chondrichthyes", "Cyclostomata",
@@ -17020,27 +16866,26 @@ _V11_BUBBLE_CLADE_ORDER = (
 )
 
 
-def _v11_bubble_clade_key(clade: str):
+def _bubble_clade_key(clade: str):
     try:
-        return (0, _V11_BUBBLE_CLADE_ORDER.index(clade))
+        return (0, _BUBBLE_CLADE_ORDER.index(clade))
     except ValueError:
         return (1, clade)
 
 
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_CSV = "v11_teleost_conserved_rodent_diverged_sites.csv"
-V11_HIGHLIGHT_SITES_POCKET_DISTANCE_CSV = "v11_teleost_conserved_rodent_diverged_sites_pocket_distance.csv"
-V11_POCKET_RESIDUES_CSV = "v11_pocket_residues.csv"  # V11.1 pillar-5 output
+TELEOST_CONSERVED_RODENT_DIVERGED_CSV = "teleost_conserved_rodent_diverged_sites.csv"
+HIGHLIGHT_SITES_POCKET_DISTANCE_CSV = "teleost_conserved_rodent_diverged_sites_pocket_distance.csv"
+POCKET_RESIDUES_CSV = "pocket_residues.csv"  # .1 pillar-5 output
 # Pocket-proximity class thresholds (Cα-Cα distance in Angstroms from the
 # highlight residue to the nearest hand-curated active-site residue):
 #   ≤ 5 Å  → pocket_lining   (direct contact, side-chain accessible)
-#   ≤ 8 Å  → pocket_proximal (typical "in-pocket" SDP definition; what V11
-#                              pillar 5 uses for substrate-pocket calls)
+#   ≤ 8 Å  → pocket_proximal (typical "in-pocket" SDP definition; what #                              pillar 5 uses for substrate-pocket calls)
 #   ≤ 12 Å → near_pocket     (allosteric / first-shell)
 #   else   → distal
-V11_POCKET_DISTANCE_LINING_THRESHOLD_AA = 5.0
-V11_POCKET_DISTANCE_PROXIMAL_THRESHOLD_AA = 8.0
-V11_POCKET_DISTANCE_NEAR_THRESHOLD_AA = 12.0
-_V11_AA3_TO_1 = {
+POCKET_DISTANCE_LINING_THRESHOLD_AA = 5.0
+POCKET_DISTANCE_PROXIMAL_THRESHOLD_AA = 8.0
+POCKET_DISTANCE_NEAR_THRESHOLD_AA = 12.0
+_AA3_TO_1 = {
     "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C", "GLN": "Q",
     "GLU": "E", "GLY": "G", "HIS": "H", "ILE": "I", "LEU": "L", "LYS": "K",
     "MET": "M", "PHE": "F", "PRO": "P", "SER": "S", "THR": "T", "TRP": "W",
@@ -17049,35 +16894,35 @@ _V11_AA3_TO_1 = {
 # Strict tier (existing behaviour): highly-conserved teleosts × strongly
 # diverged rodents. Captures the most clear-cut "fish-conserved, rodent-lost"
 # sites; few in number but high-confidence.
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD = 0.70
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD = 0.50
+TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD = 0.70
+TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD = 0.50
 # Mid tier (added 2026-06-01 per user feedback): positions where teleosts
 # have OK conservation and rodents are lacking, but the absolute values
 # don't meet the strict cut. Catches the broader landscape — especially
 # rodent-lacking positions with moderate but real teleost agreement.
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_MID = 0.55
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD_MID = 0.65
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_MID = 0.25
+TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_MID = 0.55
+TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD_MID = 0.65
+TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_MID = 0.25
 # Broad tier (added 2026-06-01 follow-up): fish identity is meaningfully
 # HIGHER than rodent identity, even though both are above the mid-tier
 # rodent ceiling. Catches "fish > rodent" gaps that the strict / mid cuts
 # miss — e.g. DHRS7 position 160 (Teleosts=0.96, Rodents=0.75, Δ=0.21):
 # fish is clearly more conserved than rodents but the absolute thresholds
 # aren't tripped. Mutually exclusive with strict and mid.
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_BROAD = 0.70
-V11_TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_BROAD = 0.15
+TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_BROAD = 0.70
+TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_BROAD = 0.15
 
 
-def _v11_highlight_teleost_rodent_diverged_tiered(df: pd.DataFrame,
+def _highlight_teleost_rodent_diverged_tiered(df: pd.DataFrame,
                                                   teleost_col: str = "Teleosts_IdentityFraction",
                                                   rodent_col: str = "Rodents_IdentityFraction",
-                                                  teleost_min_strict: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD,
-                                                  rodent_max_strict: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD,
-                                                  teleost_min_mid: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_MID,
-                                                  rodent_max_mid: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD_MID,
-                                                  min_delta_mid: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_MID,
-                                                  teleost_min_broad: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_BROAD,
-                                                  min_delta_broad: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_BROAD,
+                                                  teleost_min_strict: float = TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD,
+                                                  rodent_max_strict: float = TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD,
+                                                  teleost_min_mid: float = TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_MID,
+                                                  rodent_max_mid: float = TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD_MID,
+                                                  min_delta_mid: float = TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_MID,
+                                                  teleost_min_broad: float = TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD_BROAD,
+                                                  min_delta_broad: float = TELEOST_CONSERVED_RODENT_DIVERGED_MIN_DELTA_BROAD,
                                                   ) -> Dict[str, List[int]]:
     """Return tiered lists of fish-conserved, rodent-lost positions.
 
@@ -17129,17 +16974,17 @@ def _v11_highlight_teleost_rodent_diverged_tiered(df: pd.DataFrame,
     return {"strict": strict_positions, "mid": mid_positions, "broad": broad_positions}
 
 
-def _v11_highlight_teleost_rodent_diverged(df: pd.DataFrame,
+def _highlight_teleost_rodent_diverged(df: pd.DataFrame,
                                            teleost_col: str = "Teleosts_IdentityFraction",
                                            rodent_col: str = "Rodents_IdentityFraction",
-                                           teleost_min: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD,
-                                           rodent_max: float = V11_TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD,
+                                           teleost_min: float = TELEOST_CONSERVED_RODENT_DIVERGED_TELEOST_THRESHOLD,
+                                           rodent_max: float = TELEOST_CONSERVED_RODENT_DIVERGED_RODENT_THRESHOLD,
                                            include_mid: bool = False) -> List[int]:
     """Return reference positions where Teleosts is highly conserved (≥
     teleost_min) AND Rodents has substantially diverged (≤ rodent_max).
 
     When `include_mid=True` ALSO includes the mid-tier positions (broader
-    threshold; see _v11_highlight_teleost_rodent_diverged_tiered docstring).
+    threshold; see _highlight_teleost_rodent_diverged_tiered docstring).
     Default False so back-compat callers only get the strict tier.
     """
     if df is None or df.empty:
@@ -17154,13 +16999,13 @@ def _v11_highlight_teleost_rodent_diverged(df: pd.DataFrame,
             return []
         mask = (sub[teleost_col] >= float(teleost_min)) & (sub[rodent_col] <= float(rodent_max))
         return [int(p) for p in sub.loc[mask, "ReferenceResidueNumber"].tolist()]
-    tiers = _v11_highlight_teleost_rodent_diverged_tiered(df, teleost_col, rodent_col,
+    tiers = _highlight_teleost_rodent_diverged_tiered(df, teleost_col, rodent_col,
                                                          teleost_min_strict=teleost_min,
                                                          rodent_max_strict=rodent_max)
     return tiers["strict"] + tiers["mid"]
 
 
-def v11_write_teleost_conserved_rodent_diverged_sites(csv_path: Path | str, outdir: Path | str,
+def write_teleost_conserved_rodent_diverged_sites(csv_path: Path | str, outdir: Path | str,
                                                       teleost_col: str = "Teleosts_IdentityFraction",
                                                       rodent_col: str = "Rodents_IdentityFraction") -> Optional[Path]:
     """Emit a per-position CSV of the "fish-conserved, rodent-lost" sites
@@ -17180,13 +17025,13 @@ def v11_write_teleost_conserved_rodent_diverged_sites(csv_path: Path | str, outd
         return None
     if df.empty or teleost_col not in df.columns or rodent_col not in df.columns:
         return None
-    tiers = _v11_highlight_teleost_rodent_diverged_tiered(df, teleost_col, rodent_col)
+    tiers = _highlight_teleost_rodent_diverged_tiered(df, teleost_col, rodent_col)
     strict_set = set(tiers.get("strict") or [])
     mid_set = set(tiers.get("mid") or [])
     broad_set = set(tiers.get("broad") or [])
     all_positions = sorted(strict_set | mid_set | broad_set)
     if not all_positions:
-        out = outdir / V11_TELEOST_CONSERVED_RODENT_DIVERGED_CSV
+        out = outdir / TELEOST_CONSERVED_RODENT_DIVERGED_CSV
         pd.DataFrame(columns=[
             "reference_position", "reference_residue", "tier",
             "teleost_identity", "rodent_identity", "delta_teleost_minus_rodent",
@@ -17219,7 +17064,7 @@ def v11_write_teleost_conserved_rodent_diverged_sites(csv_path: Path | str, outd
             "delta_teleost_minus_rodent": float(row[teleost_col] - row[rodent_col]),
             **{c.replace("_IdentityFraction", "_identity"): float(row[c]) if isinstance(row[c], (int, float)) and np.isfinite(row[c]) else None for c in extra_cols},
         })
-    out = outdir / V11_TELEOST_CONSERVED_RODENT_DIVERGED_CSV
+    out = outdir / TELEOST_CONSERVED_RODENT_DIVERGED_CSV
     # Sort: strict tier first, then mid, then broad, then by position.
     out_df = pd.DataFrame(out_rows)
     if not out_df.empty:
@@ -17229,7 +17074,7 @@ def v11_write_teleost_conserved_rodent_diverged_sites(csv_path: Path | str, outd
     return out
 
 
-def _v11_parse_pdb_ca_atoms(pdb_path: Path) -> Tuple[Dict[int, Tuple[float, float, float]], Dict[int, str]]:
+def _parse_pdb_ca_atoms(pdb_path: Path) -> Tuple[Dict[int, Tuple[float, float, float]], Dict[int, str]]:
     """Parse a PDB file and return (residue_number -> (x, y, z)) for CA atoms
     plus (residue_number -> one-letter AA) lookup. Skips alt-loc entries past
     the first one encountered for each residue."""
@@ -17252,11 +17097,11 @@ def _v11_parse_pdb_ca_atoms(pdb_path: Path) -> Tuple[Dict[int, Tuple[float, floa
             except ValueError:
                 continue
             coords[resi] = (x, y, z)
-            aa1[resi] = _V11_AA3_TO_1.get(line[17:20].strip(), "X")
+            aa1[resi] = _AA3_TO_1.get(line[17:20].strip(), "X")
     return coords, aa1
 
 
-def _v11_compute_per_clade_consensus_at_positions(
+def _compute_per_clade_consensus_at_positions(
     alignment: Any,
     reference_species: str,
     positions: Sequence[int],
@@ -17273,7 +17118,7 @@ def _v11_compute_per_clade_consensus_at_positions(
         residue that species carries at this position, exposed as
         `{species_key}_aa`. Default tracks Mus musculus + Danio rerio —
         the canonical model rodent + the mandatory teleost reference in
-        V11's design.
+        's design.
 
     Returns: {pos: {...above keys}}. Positions that don't map back to a
     reference column (gap in human) are skipped.
@@ -17281,7 +17126,7 @@ def _v11_compute_per_clade_consensus_at_positions(
     if not positions:
         return {}
     try:
-        aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
+        aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
     except Exception:  # noqa: BLE001
         return {}
     if ref_record is None:
@@ -17291,7 +17136,7 @@ def _v11_compute_per_clade_consensus_at_positions(
         if ref_pos is not None:
             pos_to_col[int(ref_pos)] = col_idx
 
-    species_clade_broad = _v11_species_clade_map(alignment, taxonomy_lookup)
+    species_clade_broad = _species_clade_map(alignment, taxonomy_lookup)
 
     teleost_records: List[Any] = []
     rodent_records: List[Any] = []
@@ -17306,7 +17151,7 @@ def _v11_compute_per_clade_consensus_at_positions(
         if broad == "Teleostei":
             teleost_records.append(rec)
         try:
-            grouped = v11_resolve_grouped_clade(species, broad)
+            grouped = resolve_grouped_clade(species, broad)
         except Exception:  # noqa: BLE001
             grouped = ""
         if grouped == "Rodents":
@@ -17384,20 +17229,20 @@ def _v11_compute_per_clade_consensus_at_positions(
     return out
 
 
-def _v11_pocket_proximity_class(distance_aa: Optional[float]) -> str:
+def _pocket_proximity_class(distance_aa: Optional[float]) -> str:
     """Categorical proximity bucket for a Cα-Cα distance in Angstroms."""
     if distance_aa is None or not math.isfinite(distance_aa):
         return "unknown"
-    if distance_aa <= V11_POCKET_DISTANCE_LINING_THRESHOLD_AA:
+    if distance_aa <= POCKET_DISTANCE_LINING_THRESHOLD_AA:
         return "pocket_lining"
-    if distance_aa <= V11_POCKET_DISTANCE_PROXIMAL_THRESHOLD_AA:
+    if distance_aa <= POCKET_DISTANCE_PROXIMAL_THRESHOLD_AA:
         return "pocket_proximal"
-    if distance_aa <= V11_POCKET_DISTANCE_NEAR_THRESHOLD_AA:
+    if distance_aa <= POCKET_DISTANCE_NEAR_THRESHOLD_AA:
         return "near_pocket"
     return "distal"
 
 
-def v11_write_highlight_sites_pocket_distance(
+def write_highlight_sites_pocket_distance(
     outdir: Path | str,
     gene_label: str,
     active_site_residues: Optional[Sequence[Any]] = None,
@@ -17405,9 +17250,9 @@ def v11_write_highlight_sites_pocket_distance(
     alignment: Any = None,
     reference_species: str = "homo_sapiens",
     taxonomy_lookup: Optional[Dict[str, Any]] = None,
-    sites_csv_filename: str = V11_TELEOST_CONSERVED_RODENT_DIVERGED_CSV,
+    sites_csv_filename: str = TELEOST_CONSERVED_RODENT_DIVERGED_CSV,
     pdb_filename: str = ALPHAFOLD_MODEL_FILENAME,
-    output_filename: str = V11_HIGHLIGHT_SITES_POCKET_DISTANCE_CSV,
+    output_filename: str = HIGHLIGHT_SITES_POCKET_DISTANCE_CSV,
 ) -> Optional[Path]:
     """For every fish-conserved / rodent-diverged highlight position, compute
     the Cα-Cα distance to the gene's nearest hand-curated active-site
@@ -17419,14 +17264,14 @@ def v11_write_highlight_sites_pocket_distance(
     Parameters
     ----------
     outdir : Path
-        V11 output directory containing the highlight-sites CSV and the
+        output directory containing the highlight-sites CSV and the
         human reference AlphaFold PDB.
     gene_label : str
         Gene symbol, used for the output filename / annotation only.
     active_site_residues : Sequence
         Iterable of either bare integers (residue numbers) or 2-tuples
         ``(position, label)`` where label is a human-friendly catalytic
-        annotation like ``"S228 nucleophile"``. When None or empty, the
+        annotation such as ``"Y155 catalytic tyrosine"``. When None or empty, the
         helper emits the file with distance columns set to None and a
         ``pocket_proximity_class`` of ``"n/a (no active-site definition)"``
         so downstream tooling still finds the expected schema for any gene.
@@ -17434,7 +17279,7 @@ def v11_write_highlight_sites_pocket_distance(
     New columns
     -----------
     - ``nearest_active_site_position`` (int)
-    - ``nearest_active_site_residue`` (str, e.g. ``"S228 nucleophile"``)
+    - ``nearest_active_site_residue`` (str, e.g. ``"Y155 catalytic tyrosine"``)
     - ``min_CA_distance_to_active_site_AA`` (float, 2 dp)
     - ``CA_distance_to_pocket_centroid_AA`` (float, 2 dp)
     - ``pocket_proximity_class`` (categorical: pocket_lining / pocket_proximal
@@ -17460,7 +17305,7 @@ def v11_write_highlight_sites_pocket_distance(
         ).to_csv(out_path, index=False)
         return out_path
 
-    ca_coords, aa1_by_resi = _v11_parse_pdb_ca_atoms(pdb_path)
+    ca_coords, aa1_by_resi = _parse_pdb_ca_atoms(pdb_path)
 
     # Normalise active-site spec into a list of (position, label) tuples.
     active_pairs: List[Tuple[int, str]] = []
@@ -17548,7 +17393,7 @@ def v11_write_highlight_sites_pocket_distance(
             if math.isfinite(best_d):
                 min_d = round(best_d, 2)
                 centroid_d = round(_dist(highlight_xyz, centroid), 2)
-                class_label = _v11_pocket_proximity_class(min_d)
+                class_label = _pocket_proximity_class(min_d)
             else:
                 class_label = "active_sites_not_in_PDB"
 
@@ -17574,7 +17419,7 @@ def v11_write_highlight_sites_pocket_distance(
         except Exception:  # noqa: BLE001
             positions = []
         try:
-            per_clade = _v11_compute_per_clade_consensus_at_positions(
+            per_clade = _compute_per_clade_consensus_at_positions(
                 alignment, reference_species, positions, taxonomy_lookup,
             )
         except Exception:  # noqa: BLE001
@@ -17602,15 +17447,15 @@ def v11_write_highlight_sites_pocket_distance(
             for k, vals in new_cols.items():
                 out_df[k] = vals
 
-    # V11.1 pillar-5 enrichment: if v11_pocket_residues.csv exists in the
+    # .1 pillar-5 enrichment: if pocket_residues.csv exists in the
     # same dir, left-merge its per-residue structural classification onto
     # the highlight rows. Adds packing_classification (core /
     # pocket_lining / surface from Cα-packing density), is_substrate_pocket
     # (boolean: residue is within 8 Å of any active-site Cα — pillar-5's
     # definition), relative_burial (SASA proxy, 0..1) and plddt. Silently
     # skipped when the pocket CSV is absent (e.g. pipeline-time call
-    # before the V11.1 module has run).
-    pocket_resi_csv = outdir / V11_POCKET_RESIDUES_CSV
+    # before the .1 module has run).
+    pocket_resi_csv = outdir / POCKET_RESIDUES_CSV
     if pocket_resi_csv.exists():
         try:
             pkt = pd.read_csv(pocket_resi_csv)
@@ -17661,7 +17506,7 @@ def v11_write_highlight_sites_pocket_distance(
     return out_path
 
 
-def _v11_render_allosteric_summary_figures(
+def _render_allosteric_summary_figures(
     allosteric_summary_csv: Path,
     gene_label: str,
     *,
@@ -17756,7 +17601,7 @@ def _v11_render_allosteric_summary_figures(
         title_extra = f"  (page {page_idx + 1} of {n_pages_A})" if n_pages_A > 1 else ""
         fig.suptitle(
             f"{gene_label} — PILOT: structural allosteric profile of highlight residues{title_extra}\n"
-            f"Cα contact graph (≤ 8 Å, |i−j| ≥ 3); candidate allosteric residue = V11.1 packing 'pocket_lining' AND NOT in substrate pocket",
+            f"Cα contact graph (≤ 8 Å, |i−j| ≥ 3); candidate allosteric residue = .1 packing 'pocket_lining' AND NOT in substrate pocket",
             fontsize=11, y=0.97,
         )
         ax = fig.add_subplot(111)
@@ -17906,7 +17751,7 @@ def _v11_render_allosteric_summary_figures(
     return figs
 
 
-def _v11_render_pocket_distance_table_figures(
+def _render_pocket_distance_table_figures(
     pocket_distance_csv: Path,
     gene_label: str,
     max_rows_per_page: int = 22,
@@ -18017,7 +17862,7 @@ def _v11_render_pocket_distance_table_figures(
          lambda v: str(v) if pd.notna(v) else "—"),
     ]
     if has_packing:
-        columns_spec.append(("packing_classification", "Packing class (V11.1)", _fmt_packing))
+        columns_spec.append(("packing_classification", "Packing class (.1)", _fmt_packing))
     if has_substrate:
         columns_spec.append(("is_substrate_pocket", "≤8 Å pocket?", _fmt_pocket_bool))
     if has_burial:
@@ -18203,7 +18048,7 @@ def _v11_render_pocket_distance_table_figures(
         table.auto_set_font_size(False)
         table.set_fontsize(8.5)
         # Auto-size every column to its widest cell (header included) so
-        # long catalytic labels like "S228 nucleophile" don't overflow.
+        # long residue labels do not overflow.
         table.auto_set_column_width(col=list(range(len(col_headers))))
         table.scale(1.0, 1.35)
         # Style the header row.
@@ -18232,10 +18077,10 @@ def _v11_render_pocket_distance_table_figures(
         # Footer with proximity-class legend + threshold defs.
         footer_lines = [
             "Row colour = distance-based proximity class (Cα-Cα Å to nearest catalytic residue): "
-            f"pocket_lining ≤ {V11_POCKET_DISTANCE_LINING_THRESHOLD_AA:.0f} (rose) | "
-            f"pocket_proximal ≤ {V11_POCKET_DISTANCE_PROXIMAL_THRESHOLD_AA:.0f} (orange) | "
-            f"near_pocket ≤ {V11_POCKET_DISTANCE_NEAR_THRESHOLD_AA:.0f} (yellow) | "
-            f"distal > {V11_POCKET_DISTANCE_NEAR_THRESHOLD_AA:.0f} (pale grey)."
+            f"pocket_lining ≤ {POCKET_DISTANCE_LINING_THRESHOLD_AA:.0f} (rose) | "
+            f"pocket_proximal ≤ {POCKET_DISTANCE_PROXIMAL_THRESHOLD_AA:.0f} (orange) | "
+            f"near_pocket ≤ {POCKET_DISTANCE_NEAR_THRESHOLD_AA:.0f} (yellow) | "
+            f"distal > {POCKET_DISTANCE_NEAR_THRESHOLD_AA:.0f} (pale grey)."
         ]
         tier_legend = (
             "Tier cell band: strict = dark amber (matches bubble-grid dark amber, bold text), "
@@ -18247,7 +18092,7 @@ def _v11_render_pocket_distance_table_figures(
         footer_lines.append(tier_legend)
         if has_packing or has_substrate:
             footer_lines.append(
-                "V11.1 pocket detector: 'Packing class' cell turns rose when residue lines a pocket by Cα packing "
+                ".1 pocket detector: 'Packing class' cell turns rose when residue lines a pocket by Cα packing "
                 "density; '≤8 Å pocket?' turns rose when residue is within 8 Å of any active-site residue (pillar-5 "
                 "substrate-pocket call)."
             )
@@ -18265,16 +18110,16 @@ def _v11_render_pocket_distance_table_figures(
     return figs
 
 
-def v11_plot_clade_identity_bubble(csv_path: Path | str,
+def plot_clade_identity_bubble(csv_path: Path | str,
                                    outdir: Path | str,
                                    gene_label: str,
                                    reference_species: str = "homo_sapiens",
                                    residues_per_block: int = 60,
                                    *,
                                    clade_order: Optional[Sequence[str]] = None,
-                                   png_filename: str = V11_CLADE_IDENTITY_BUBBLE_PNG,
-                                   svg_filename: str = V11_CLADE_IDENTITY_BUBBLE_SVG,
-                                   pdf_filename: Optional[str] = V11_CLADE_IDENTITY_BUBBLE_PDF,
+                                   png_filename: str = CLADE_IDENTITY_BUBBLE_PNG,
+                                   svg_filename: str = CLADE_IDENTITY_BUBBLE_SVG,
+                                   pdf_filename: Optional[str] = CLADE_IDENTITY_BUBBLE_PDF,
                                    pdf_blocks_per_page: int = 3,
                                    title_suffix: str = "",
                                    pocket_distance_csv: Optional[Path] = None,
@@ -18287,7 +18132,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
     SIZED by that clade's identity-to-human fraction (big = conserved, tiny =
     divergent). The reference amino-acid letter is printed above each column;
     letters turn red where the column is poorly covered (gaps in most clades).
-    Reads the viewer-format CSV from v11_write_clade_identity_overlay_csv."""
+    Reads the viewer-format CSV from write_clade_identity_overlay_csv."""
     csv_path = Path(csv_path)
     outdir = Path(outdir)
     if not csv_path.exists():
@@ -18301,7 +18146,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
         order_index = {c: i for i, c in enumerate(clade_order)}
         clades.sort(key=lambda c: (order_index.get(c, len(order_index)), c))
     else:
-        clades.sort(key=_v11_bubble_clade_key)
+        clades.sort(key=_bubble_clade_key)
     if not clades:
         return None
 
@@ -18367,7 +18212,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
         #   broad  — palest yellow band + `<pos>` label (the broader
         #            "fish > rodent" landscape: T ≥ 0.70, gap ≥ 0.15, even
         #            when rodent identity itself is moderately high)
-        highlight_tiers = _v11_highlight_teleost_rodent_diverged_tiered(df)
+        highlight_tiers = _highlight_teleost_rodent_diverged_tiered(df)
         strict_positions = set(highlight_tiers.get("strict") or [])
         mid_positions = set(highlight_tiers.get("mid") or [])
         broad_positions = set(highlight_tiers.get("broad") or [])
@@ -18392,7 +18237,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
             xs, ys, cols, szs, vals = [], [], [], [], []
             for row_idx, clade in enumerate(clades):
                 y = n_clades - 1 - row_idx
-                color = _v11_clade_color(clade)
+                color = _clade_color(clade)
                 frac_col = f"{clade}_IdentityFraction"
                 # Connecting line per clade row — bubbles render as beads on
                 # this thread, making each clade's per-residue track easy to
@@ -18483,7 +18328,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
                 ax.get_yticklabels(),
                 [clades[n_clades - 1 - i] for i in range(n_clades)],
             ):
-                tick.set_color(_v11_clade_color(clade))
+                tick.set_color(_clade_color(clade))
             ax.set_xticks([])
             for spine in ("top", "right", "bottom"):
                 ax.spines[spine].set_visible(False)
@@ -18515,7 +18360,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
         fig_local.tight_layout(pad=0.9, h_pad=0.6, rect=(0, 0.015, 1, 1))
         return fig_local
 
-    # Tall single-page figure (PNG + SVG) — historical V11 view.
+    # Tall single-page figure (PNG + SVG) — historical view.
     fig = _render_blocks(list(range(n_blocks)))
     png = outdir / png_filename
     svg = outdir / svg_filename
@@ -18548,7 +18393,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
                 # pocket-distance table in one printable artefact.
                 if pocket_distance_csv:
                     try:
-                        pd_figs = _v11_render_pocket_distance_table_figures(
+                        pd_figs = _render_pocket_distance_table_figures(
                             Path(pocket_distance_csv), gene_label,
                         )
                         for pd_fig in pd_figs:
@@ -18564,7 +18409,7 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
                 # partners (when available).
                 if allosteric_summary_csv:
                     try:
-                        allo_figs = _v11_render_allosteric_summary_figures(
+                        allo_figs = _render_allosteric_summary_figures(
                             Path(allosteric_summary_csv), gene_label,
                             coevolution_csv=Path(allosteric_coevolution_csv)
                                 if allosteric_coevolution_csv else None,
@@ -18581,14 +18426,14 @@ def v11_plot_clade_identity_bubble(csv_path: Path | str,
     return svg
 
 
-def v11_write_clade_identity_overlay_csv(outdir: Path | str,
+def write_clade_identity_overlay_csv(outdir: Path | str,
                                          alignment: Any,
                                          reference_species: str,
                                          taxonomy_lookup: Optional[Dict[str, Any]] = None,
                                          *,
                                          clade_resolver: Optional[Any] = None,
                                          clade_sort_key: Optional[Any] = None,
-                                         output_filename: str = V11_STRUCTURE_OVERLAY_CSV) -> Path:
+                                         output_filename: str = STRUCTURE_OVERLAY_CSV) -> Path:
     """Write the viewer-format per-clade identity CSV. For every reference
     (ungapped) position and every broad clade, reports the fraction of that
     clade's members whose residue matches the human reference (gap-aware),
@@ -18597,14 +18442,14 @@ def v11_write_clade_identity_overlay_csv(outdir: Path | str,
     3Dmol viewer can auto-detect the groups.
 
     `clade_resolver` overrides the species→clade mapping (defaults to
-    v11_resolve_broad_clade via _v11_species_clade_map). Pass a callable that
+    resolve_broad_clade via _species_clade_map). Pass a callable that
     takes the record-id string and returns the clade label to use a custom
     grouping (e.g. MATLAB-style Primates/Rodents/OtherMammals).
     """
     outdir = Path(outdir)
-    aln_to_ref, ref_record = _v11_ref_position_records(alignment, reference_species)
+    aln_to_ref, ref_record = _ref_position_records(alignment, reference_species)
     if clade_resolver is None:
-        species_clade = _v11_species_clade_map(alignment, taxonomy_lookup)
+        species_clade = _species_clade_map(alignment, taxonomy_lookup)
     else:
         species_clade = {str(rec.id): clade_resolver(rec) for rec in alignment}
     ref_seq = str(ref_record.seq).upper()
@@ -18614,7 +18459,7 @@ def v11_write_clade_identity_overlay_csv(outdir: Path | str,
     for record in alignment:
         clade = species_clade.get(str(record.id), "Unassigned")
         clade_records.setdefault(clade, []).append(record)
-    sort_key = clade_sort_key if clade_sort_key is not None else _v11_clade_sort_key
+    sort_key = clade_sort_key if clade_sort_key is not None else _clade_sort_key
     clades_sorted = sorted(clade_records.keys(), key=sort_key)
     clade_totals = {c: len(recs) for c, recs in clade_records.items()}
 
@@ -18660,7 +18505,7 @@ def v11_write_clade_identity_overlay_csv(outdir: Path | str,
     return out_path
 
 
-def v11_write_structure_overlay(outdir: Path | str,
+def write_structure_overlay(outdir: Path | str,
                                 alignment: Any,
                                 reference_species: str,
                                 gene_label: str,
@@ -18669,7 +18514,7 @@ def v11_write_structure_overlay(outdir: Path | str,
     """Orchestrate the interactive 3D structure overlay: write the per-clade
     identity CSV, then call the standalone generator (build_structure_overlay.py,
     imported as a module) to produce a self-contained
-    <V11_STRUCTURE_OVERLAY_HTML> that colours those clade identities onto the
+    <STRUCTURE_OVERLAY_HTML> that colours those clade identities onto the
     human reference AlphaFold model. Requires the human reference PDB +
     metadata to be present in `outdir` (written by the AlphaFold bundle step)."""
     outdir = Path(outdir)
@@ -18687,12 +18532,12 @@ def v11_write_structure_overlay(outdir: Path | str,
         result["reason"] = "human reference AlphaFold PDB not found in output dir."
         return result
 
-    csv_path = v11_write_clade_identity_overlay_csv(outdir, alignment, reference_species, taxonomy_lookup)
+    csv_path = write_clade_identity_overlay_csv(outdir, alignment, reference_species, taxonomy_lookup)
     result["csv_path"] = str(csv_path)
 
-    # V11 broad-clade bubble grid (13 vertebrate clades, Mammalia as one bucket).
+    # broad-clade bubble grid (13 vertebrate clades, Mammalia as one bucket).
     try:
-        bubble = v11_plot_clade_identity_bubble(csv_path, outdir, gene_label, reference_species)
+        bubble = plot_clade_identity_bubble(csv_path, outdir, gene_label, reference_species)
         result["bubble_svg"] = str(bubble) if bubble else None
     except Exception as exc:  # noqa: BLE001
         result["bubble_svg"] = None
@@ -18709,7 +18554,7 @@ def v11_write_structure_overlay(outdir: Path | str,
         if not gen_path.exists():
             result["reason"] = f"generator not found: {gen_path}"
             return result
-        spec = importlib.util.spec_from_file_location("v11_structure_overlay_gen", gen_path)
+        spec = importlib.util.spec_from_file_location("structure_overlay_gen", gen_path)
         gen = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(gen)
     except Exception as exc:  # noqa: BLE001
@@ -18743,24 +18588,24 @@ def v11_write_structure_overlay(outdir: Path | str,
     # granularity.
     grouped_csv: Optional[Path] = None
     try:
-        species_clade_broad = _v11_species_clade_map(alignment, taxonomy_lookup)
+        species_clade_broad = _species_clade_map(alignment, taxonomy_lookup)
 
         def _grouped_resolver(record):
             species, _sym = parse_header_species_symbol(str(record.id))
             broad = species_clade_broad.get(str(record.id), "Unassigned")
-            return v11_resolve_grouped_clade(species, broad)
+            return resolve_grouped_clade(species, broad)
 
         def _grouped_sort_key(clade: str):
             try:
-                return (0, _V11_GROUPED_BUBBLE_CLADE_ORDER.index(clade))
+                return (0, _GROUPED_BUBBLE_CLADE_ORDER.index(clade))
             except ValueError:
                 return (1, clade)
 
-        grouped_csv = v11_write_clade_identity_overlay_csv(
+        grouped_csv = write_clade_identity_overlay_csv(
             outdir, alignment, reference_species, taxonomy_lookup,
             clade_resolver=_grouped_resolver,
             clade_sort_key=_grouped_sort_key,
-            output_filename=V11_GROUPED_CLADE_IDENTITY_CSV,
+            output_filename=GROUPED_CLADE_IDENTITY_CSV,
         )
         result["grouped_csv_path"] = str(grouped_csv)
         # Pre-generate the teleost-rodent highlight-sites CSV and the
@@ -18771,8 +18616,8 @@ def v11_write_structure_overlay(outdir: Path | str,
         pocket_dist_csv: Optional[Path] = None
         try:
             if grouped_csv is not None and grouped_csv.exists():
-                v11_write_teleost_conserved_rodent_diverged_sites(grouped_csv, outdir)
-                pocket_dist_csv = v11_write_highlight_sites_pocket_distance(
+                write_teleost_conserved_rodent_diverged_sites(grouped_csv, outdir)
+                pocket_dist_csv = write_highlight_sites_pocket_distance(
                     outdir, gene_label or "GENE",
                     active_site_residues=active_pairs_for_distance or None,
                     alignment=alignment,
@@ -18782,12 +18627,12 @@ def v11_write_structure_overlay(outdir: Path | str,
         except Exception as _pd_pre_exc:  # noqa: BLE001
             result["pocket_distance_pre_error"] = str(_pd_pre_exc)
             pocket_dist_csv = None
-        grouped_bubble = v11_plot_clade_identity_bubble(
+        grouped_bubble = plot_clade_identity_bubble(
             grouped_csv, outdir, gene_label, reference_species,
-            clade_order=_V11_GROUPED_BUBBLE_CLADE_ORDER,
-            png_filename=V11_GROUPED_CLADE_IDENTITY_BUBBLE_PNG,
-            svg_filename=V11_GROUPED_CLADE_IDENTITY_BUBBLE_SVG,
-            pdf_filename=V11_GROUPED_CLADE_IDENTITY_BUBBLE_PDF,
+            clade_order=_GROUPED_BUBBLE_CLADE_ORDER,
+            png_filename=GROUPED_CLADE_IDENTITY_BUBBLE_PNG,
+            svg_filename=GROUPED_CLADE_IDENTITY_BUBBLE_SVG,
+            pdf_filename=GROUPED_CLADE_IDENTITY_BUBBLE_PDF,
             title_suffix="(subdivided 9-group: Primates / Rodents / OtherMammals split)",
             pocket_distance_csv=pocket_dist_csv,
         )
@@ -18806,7 +18651,7 @@ def v11_write_structure_overlay(outdir: Path | str,
         af_model = clean_json_value(pred.get("modelEntityId")) or (f"AF-{uniprot}-F1" if uniprot else None)
         af_version = pred.get("latestVersion")
 
-    html_path = outdir / V11_STRUCTURE_OVERLAY_HTML
+    html_path = outdir / STRUCTURE_OVERLAY_HTML
     js_src = outdir / ALPHAFOLD_VIEWER_JS_FILENAME  # 3Dmol-min.js already staged by the report
 
     # Compute the "fish-conserved / rodent-diverged" highlight residues from
@@ -18817,7 +18662,7 @@ def v11_write_structure_overlay(outdir: Path | str,
     try:
         if grouped_csv is not None and grouped_csv.exists():
             _grouped_df_for_highlight = pd.read_csv(grouped_csv)
-            _tiers_for_highlight = _v11_highlight_teleost_rodent_diverged_tiered(
+            _tiers_for_highlight = _highlight_teleost_rodent_diverged_tiered(
                 _grouped_df_for_highlight
             )
             for tier_name in ("strict", "mid", "broad"):
@@ -18870,7 +18715,7 @@ def v11_write_structure_overlay(outdir: Path | str,
     # auto-detects clade groups from the CSV columns, so the user can pick
     # any of the 9 groups in the viewer to shade the structure.
     if grouped_csv is not None and grouped_csv.exists():
-        grouped_html_path = outdir / V11_GROUPED_STRUCTURE_OVERLAY_HTML
+        grouped_html_path = outdir / GROUPED_STRUCTURE_OVERLAY_HTML
         try:
             gen.build_overlay(
                 gene=gene_label,
@@ -18894,7 +18739,7 @@ def v11_write_structure_overlay(outdir: Path | str,
     # columns). Emitted alongside the highlight band in the bubble grids.
     try:
         if grouped_csv is not None and grouped_csv.exists():
-            sites_path = v11_write_teleost_conserved_rodent_diverged_sites(grouped_csv, outdir)
+            sites_path = write_teleost_conserved_rodent_diverged_sites(grouped_csv, outdir)
             result["teleost_rodent_sites_csv_path"] = str(sites_path) if sites_path else None
     except Exception as exc:  # noqa: BLE001
         result["teleost_rodent_sites_csv_path"] = None
@@ -18919,7 +18764,7 @@ def v11_write_structure_overlay(outdir: Path | str,
             for i, pos in enumerate(ar):
                 label = cl[i] if i < len(cl) else None
                 active_pairs_for_distance.append((int(pos), label or ""))
-        pocket_dist_path = v11_write_highlight_sites_pocket_distance(
+        pocket_dist_path = write_highlight_sites_pocket_distance(
             outdir, gene_label or "GENE",
             active_site_residues=active_pairs_for_distance or None,
             alignment=alignment,
@@ -18938,38 +18783,38 @@ def v11_write_structure_overlay(outdir: Path | str,
     # reference (`Other` instead of `OtherFish`, `x` instead of
     # `OtherVertebrates`). Filename also matches the user's reference
     # (`clade_identity_by_reference_position_mod.csv`) so downstream tooling
-    # written against the MATLAB output can consume V11's CSV unchanged.
+    # written against the MATLAB output can consume 's CSV unchanged.
     mod_csv: Optional[Path] = None
     try:
         def _mod_resolver(record):
             species, _sym = parse_header_species_symbol(str(record.id))
             broad = species_clade_broad.get(str(record.id), "Unassigned")
-            return v11_resolve_mod_clade(species, broad)
+            return resolve_mod_clade(species, broad)
 
         def _mod_sort_key(clade: str):
             try:
-                return (0, _V11_MOD_BUBBLE_CLADE_ORDER.index(clade))
+                return (0, _MOD_BUBBLE_CLADE_ORDER.index(clade))
             except ValueError:
                 return (1, clade)
 
-        mod_csv = v11_write_clade_identity_overlay_csv(
+        mod_csv = write_clade_identity_overlay_csv(
             outdir, alignment, reference_species, taxonomy_lookup,
             clade_resolver=_mod_resolver,
             clade_sort_key=_mod_sort_key,
-            output_filename=V11_MOD_CLADE_IDENTITY_CSV,
+            output_filename=MOD_CLADE_IDENTITY_CSV,
         )
         result["mod_csv_path"] = str(mod_csv)
-        mod_bubble = v11_plot_clade_identity_bubble(
+        mod_bubble = plot_clade_identity_bubble(
             mod_csv, outdir, gene_label, reference_species,
-            clade_order=_V11_MOD_BUBBLE_CLADE_ORDER,
-            png_filename=V11_MOD_CLADE_IDENTITY_BUBBLE_PNG,
-            svg_filename=V11_MOD_CLADE_IDENTITY_BUBBLE_SVG,
-            pdf_filename=V11_MOD_CLADE_IDENTITY_BUBBLE_PDF,
+            clade_order=_MOD_BUBBLE_CLADE_ORDER,
+            png_filename=MOD_CLADE_IDENTITY_BUBBLE_PNG,
+            svg_filename=MOD_CLADE_IDENTITY_BUBBLE_SVG,
+            pdf_filename=MOD_CLADE_IDENTITY_BUBBLE_PDF,
             title_suffix="(Compact 9-group naming: Other / x)",
         )
         result["mod_bubble_svg"] = str(mod_bubble) if mod_bubble else None
 
-        mod_html_path = outdir / V11_MOD_STRUCTURE_OVERLAY_HTML
+        mod_html_path = outdir / MOD_STRUCTURE_OVERLAY_HTML
         try:
             gen.build_overlay(
                 gene=gene_label,
@@ -19038,11 +18883,11 @@ def v11_write_structure_overlay(outdir: Path | str,
                         on="ReferenceResidueNumber",
                         how="left",
                     )
-            combined_csv = outdir / V11_COMBINED_CLADE_IDENTITY_CSV
+            combined_csv = outdir / COMBINED_CLADE_IDENTITY_CSV
             combined_df.to_csv(combined_csv, index=False)
             result["combined_csv_path"] = str(combined_csv)
 
-            combined_html_path = outdir / V11_COMBINED_STRUCTURE_OVERLAY_HTML
+            combined_html_path = outdir / COMBINED_STRUCTURE_OVERLAY_HTML
             try:
                 gen.build_overlay(
                     gene=gene_label,

@@ -1,44 +1,42 @@
 #!/usr/bin/env python3
 """
 dhrs7_snapshot_figure.py
-============================
+========================
 
-Pure-Python reproduction of the DHRS7 **species-snapshot** publication figure.
+Renderer for the DHRS7 species-snapshot figure.
 
-This module is a faithful, line-for-line port of the alignment browser's
-JavaScript renderer ``buildSpeciesSnapshotSvg`` (and every helper it calls) from
-``gene_phylo_conservation_archive.py``. It reads the alignment *payload*
-(the JSON the pipeline embeds in ``alignment_browser.html``) and draws the exact
-same SVG the interactive "Species snapshot export" produces — with **no browser
-and no third-party dependencies** (Python standard library only). This makes the
-figure a transparent, reviewer-auditable artefact for the paper: every element
-(coloured residue cells, secondary-structure ribbons, tick axis, conservation
-row, the black human+zebrafish-vs-rodent frames, and the red active-trio
-asterisks) is drawn by readable Python here.
+The figure is drawn here in plain Python using only the standard library: no
+browser, no plotting library, no external dependency. Every mark on the canvas --
+the coloured residue cells, the secondary-structure ribbons, the position axis,
+the conservation line, the comparison frames and the asterisks -- is emitted by
+readable code in this file, so the figure can be audited and adjusted directly
+rather than being a black-box export.
 
-What the figure shows (all definitions ported verbatim from the browser):
+Input is the alignment payload written by the pipeline (the JSON embedded in
+``alignment_browser.html``), so the figure and the interactive browser always
+show the same alignment.
 
-* **Rows** — the 5 species compared for the paper, in fixed order:
-  mus_musculus, rattus_norvegicus, bos_taurus, danio_rerio, then
-  homo_sapiens (the human reference row, highlighted). The full ortholog set is
-  retrieved and aligned upstream; only these 5 are drawn here for the residue
-  comparison.
-* **Columns** — the "raw MUSCLE alignment (all residues)" scope (``selected_raw``)
-  with all-gap columns removed; numbering uses human reference positions.
-* **Secondary structure** — grey (#6b7280) cursive-helix / sheet-arrow / loop
-  glyphs above each row, sourced from the per-species AlphaFold models
-  (``alphafold_structure.comparative_secondary_structure.records[].mapped_ranges``,
-  already mapped onto human reference positions) and, for the human row, from
-  ``alphafold_structure.secondary_structure.ranges``.
-* **Conservation row** — Clustal-style ``* : .`` symbols across the 5 rows.
-* **Black frames** — columns where homo_sapiens and danio_rerio carry the
-  identical residue but every selected rodent (mouse, rat) differs.
-* **Red asterisk** — the subset of framed columns where bos_taurus ALSO shares
-  that residue: identical across all three *active* species (human, zebrafish,
-  bovine) while both inactive rodents diverge (candidate activity-linked sites).
+Layout:
+
+* **Rows** -- the compared species in a fixed order, non-reference rows first and
+  the human reference row last (highlighted). The full ortholog set is retrieved
+  and aligned upstream; the rows drawn here are the subset selected for the
+  residue-level comparison.
+* **Columns** -- the clean re-alignment of the selected species alone
+  (``selected_raw``), all residues and natural gaps, with all-gap columns
+  dropped. Numbering follows human reference positions.
+* **Secondary structure** -- grey helix / strand / loop glyphs above each row,
+  taken from that species' own AlphaFold model and placed on the alignment drawn
+  here (see ``add_raw_alignment_scope.py``).
+* **Conservation line** -- Clustal-style ``* : .`` symbols across the drawn rows.
+* **Frames** -- columns where homo_sapiens and danio_rerio share a residue that
+  differs in every selected rodent.
+* **Asterisks** -- the subset of framed columns where bos_taurus shares the same
+  residue, i.e. positions common to human, zebrafish and cattle while both
+  rodents diverge.
 
 Run standalone:  ``python dhrs7_snapshot_figure.py <alignment_browser.html> [out.svg]``
-or import ``render_dhrs7_snapshot(payload)`` from the reproduction driver.
+or import ``render_dhrs7_snapshot(payload)``.
 """
 from __future__ import annotations
 
@@ -95,7 +93,11 @@ SNAPSHOT_SVG_STYLE_ATTRS: Dict[str, str] = {
     "snapshot-hd-trio-star": 'fill="none" stroke="#dc2626" stroke-width="2.8" stroke-linecap="round"',
 }
 
-# The 5 species compared in the paper figure, in row order (reference last).
+# Species drawn in the figure, in row order. These are the non-reference rows;
+# the reference species is appended last by export_rows(). Two rodents that lack
+# the activity, one ruminant and one teleost are compared against human, which
+# is the combination that makes the rodent-specific substitutions legible while
+# keeping the panel readable at full sequence length.
 DHRS7_SELECTED_ORDER = ["mus_musculus", "rattus_norvegicus", "bos_taurus", "danio_rerio"]
 DHRS7_REFERENCE_SPECIES = "homo_sapiens"
 
@@ -362,6 +364,19 @@ def secondary_ranges_for_row(row, scope, payload, lookup) -> List[Dict[str, Any]
             pass
     residue_count = int((payload.get("alphafold_structure") or {}).get("residue_count") or 0)
     track_length = max(1, max_ref, int(scope.get("alignment_length") or 0), residue_count)
+
+    # Assignments computed on this alignment take precedence. They are identical
+    # to the payload's per-species ranges except where the multiple alignment had
+    # placed a residue in an insertion column and therefore carried no assignment
+    # for it; those positions are completed from the species' own model, so the
+    # ribbon follows the residues actually drawn.
+    methods = scope.get("secondary_structure_methods") or {}
+    selected = methods.get(str(scope.get("secondary_structure_method") or "")) or {}
+    per_record = selected or scope.get("secondary_structure_by_record") or {}
+    own = per_record.get(str(row.get("record_id") or ""))
+    if own:
+        return entry_display_ranges({"mapped_ranges": own}, track_length)
+
     entry = entry_for_row(row, lookup)
     if entry:
         return entry_display_ranges(entry, track_length)
@@ -445,14 +460,15 @@ def reference_row(scope) -> Optional[Dict[str, Any]]:
     return next((r for r in records if r.get("is_reference")), records[0] if records else None)
 
 
-def select_dhrs7_records(scope) -> List[str]:
-    """Return the ordered record_ids for the 4 non-reference compared species."""
+def select_dhrs7_records(scope, species_order: Optional[List[str]] = None) -> List[str]:
+    """Ordered record_ids for the non-reference rows (defaults to the standard set)."""
+    order = [str(s).strip().lower() for s in (species_order or DHRS7_SELECTED_ORDER) if str(s).strip()]
     by_species: Dict[str, str] = {}
     for r in scope.get("records") or []:
         sp = str(r.get("species") or "").lower()
-        if sp in DHRS7_SELECTED_ORDER and sp not in by_species:
+        if sp in order and sp not in by_species:
             by_species[sp] = str(r.get("record_id") or "")
-    return [by_species[sp] for sp in DHRS7_SELECTED_ORDER if sp in by_species]
+    return [by_species[sp] for sp in order if sp in by_species]
 
 
 def export_rows(scope, selected_ids) -> List[Dict[str, Any]]:
@@ -714,12 +730,13 @@ def load_payload(source: str) -> Dict[str, Any]:
 
 
 def render_dhrs7_snapshot(payload: Dict[str, Any], residues_per_line: int = 70,
-                          inline: bool = True) -> str:
+                          inline: bool = True,
+                          species_order: Optional[List[str]] = None) -> str:
     scopes = payload.get("scopes") or {}
     scope = scopes.get("selected_raw") or scopes.get("aligned_full")
     if scope is None:
         raise ValueError("payload has no selected_raw / aligned_full scope")
-    selected_ids = select_dhrs7_records(scope)
+    selected_ids = select_dhrs7_records(scope, species_order)
     svg = build_species_snapshot_svg(payload, selected_ids, residues_per_line=residues_per_line)
     return inline_snapshot_svg_styles(svg) if inline else svg
 

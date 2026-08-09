@@ -77,22 +77,22 @@ from gene_phylo_conservation_archive import (
     default_clade_age_mya,
     export_output_archive,
     write_comparative_alphafold_secondary_structure_bundle,
-    # V11: representative comparison helpers
-    v11_write_representative_comparison_outputs,
-    v11_plot_paper_quality_tree_svg,
-    V11_DEFAULT_PROPERTY_WINDOW,
-    V11_MANDATORY_FOCUS_SPECIES,
-    V11_DEFAULT_REPRESENTATIVE_CSV,
-    # V11 motif + lineage-stabilization extension
-    v11_write_motif_analysis_outputs,
-    V11_DEFAULT_ANCESTRAL_CLADES,
-    V11_DEFAULT_DERIVED_CLADES,
-    # V11: gene-agnostic labelling
-    v11_set_active_gene,
-    # V11: default per-clade consolidated summary (SS + net charge + domains)
-    v11_write_clade_consolidated_outputs,
-    # V11: interactive 3D structure overlay (3Dmol.js)
-    v11_write_structure_overlay,
+    # representative comparison helpers
+    write_representative_comparison_outputs,
+    plot_paper_quality_tree_svg,
+    DEFAULT_PROPERTY_WINDOW,
+    MANDATORY_FOCUS_SPECIES,
+    DEFAULT_REPRESENTATIVE_CSV,
+    # motif + lineage-stabilization extension
+    write_motif_analysis_outputs,
+    DEFAULT_ANCESTRAL_CLADES,
+    DEFAULT_DERIVED_CLADES,
+    # gene-agnostic labelling
+    set_active_gene,
+    # default per-clade consolidated summary (SS + net charge + domains)
+    write_clade_consolidated_outputs,
+    # interactive 3D structure overlay (3Dmol.js)
+    write_structure_overlay,
 )
 
 
@@ -884,7 +884,7 @@ def pick_best_fasta_object_metadata(metadata_df: pd.DataFrame,
     symbol_norm = normalize_text_token(gene_symbol)
     label_norm = normalize_text_token(gene_label)
 
-    def score_row(row: pd.Series) -> Tuple[int, int, int, int]:
+    def score_row(row: pd.Series) -> Tuple[int, int, int]:
         hay = ' '.join([
             str(row.get('pub_gene_id_norm') or ''),
             str(row.get('description_norm') or ''),
@@ -893,9 +893,8 @@ def pick_best_fasta_object_metadata(metadata_df: pd.DataFrame,
         ])
         exact_gene = 1 if symbol_norm and symbol_norm in hay else 0
         exact_label = 1 if label_norm and label_norm in hay else 0
-        looks_like_phospholipase = 1 if ('phospholipase' in hay or 'pla2' in hay or 'cpla2' in hay) else 0
         seq_len = int(row.get('seq_len') or 0)
-        return (exact_gene, exact_label, looks_like_phospholipase, seq_len)
+        return (exact_gene, exact_label, seq_len)
 
     sub['_score'] = sub.apply(score_row, axis=1)
     sub = sub.sort_values(by=['_score'], ascending=False, kind='stable')
@@ -1596,7 +1595,7 @@ def run_alignment(records: List[SeqRecord], input_fasta: Path, output_fasta: Pat
 
 def run_iqtree(alignment_fasta: Path, outdir: Path, iqtree_exe: str, bootstrap: int) -> Path:
     prefix = outdir / "phylo"
-    # V11: clean stale IQ-TREE artifacts from any prior run in this dir. Without
+    # clean stale IQ-TREE artifacts from any prior run in this dir. Without
     # this, IQ-TREE aborts with "Checkpoint indicates a previous run finished;
     # use -redo" when re-running into an existing output directory.
     for stale in outdir.glob("phylo.*"):
@@ -1605,7 +1604,7 @@ def run_iqtree(alignment_fasta: Path, outdir: Path, iqtree_exe: str, bootstrap: 
         except OSError:
             pass
     emit_log(f"Running IQ-TREE with {bootstrap} bootstrap replicates.")
-    # V11: pin thread count instead of "-nt AUTO". On this 8-core box the AUTO
+    # pin thread count instead of "-nt AUTO". On this 8-core box the AUTO
     # probe mis-detected a single thread as fastest after one glitched 2-thread
     # trial (654s vs 8.7s), forcing ModelFinder to grind single-threaded for
     # hours. A fixed -nt 6 bypasses the probe and uses the cores (2 left free
@@ -1827,7 +1826,7 @@ def uniprot_fetch_entry(accession: str) -> Dict[str, Any]:
 
 def uniprot_search_by_ensembl_protein(ensembl_protein_id: str,
                                       size: int = 3) -> List[Dict[str, Any]]:
-    """V9.8c: look up UniProt entries cross-referenced to a given Ensembl
+    """look up UniProt entries cross-referenced to a given Ensembl
     protein ID. Used to backfill uniprot_accession on protein_metadata_df rows
     that Ensembl-side ortholog retrieval left blank, so the per-species
     AlphaFold fetcher can later download each species' own AF model."""
@@ -1847,7 +1846,7 @@ def uniprot_search_by_ensembl_protein(ensembl_protein_id: str,
 
 def enrich_protein_metadata_with_uniprot_accessions(protein_metadata_df: pd.DataFrame,
                                                      max_workers: int = 4) -> pd.DataFrame:
-    """V9.8c: for rows missing uniprot_accession but holding a usable
+    """for rows missing uniprot_accession but holding a usable
     ensembl_protein_id, query UniProt's REST search API (xref:<ensembl_id>)
     and write back the best (reviewed-preferred) accession + the canonical
     alphafold_entry_id (AF-{accession}-F1). Non-fatal on per-row failures so
@@ -3472,25 +3471,24 @@ def plot_site_comparison_svg(site_df: pd.DataFrame, out_svg: Path, title: str) -
 
 
 # -----------------------------------------------------------------------------
-# Length QC + clade/Fourier conservation analysis helpers (V9.6)
-# -----------------------------------------------------------------------------
+# Length QC + clade/Fourier conservation analysis helpers # -----------------------------------------------------------------------------
 
 DEFAULT_LENGTH_FILTER_KEEP_SPECIES: Tuple[str, ...] = (
-    # V9.8c: Ensembl PLA2G4A model for lamprey (Petromyzon marinus) is annotated
-    # at 302 aa, a truncated gene model that fails the default 30% length window.
+    # The lamprey (Petromyzon marinus) Ensembl gene model is frequently a
+    # truncated prediction that fails the default 30% length window.
     # Whitelist by default so the jawless-vertebrate clade keeps both cyclostomes.
     "petromyzon_marinus",
 )
 
 
-# V12: gene-gated per-species sequence-source overrides. Ensembl's canonical
+# gene-gated per-species sequence-source overrides. Ensembl's canonical
 # translation for some species is a long isoform that the +/-30 aa reference
 # length filter then rejects (e.g. Bos taurus DHRS7 ENSBTAP00000086519 = 373 aa
 # vs the 339 aa human reference). Swapping in a UniProt isoform of the SAME gene
 # keeps the species in the analysis and gives it a real, reference-length row.
 # Keyed by upper-cased gene symbol; each entry is additionally gated by the
 # record's Ensembl protein id so it never fires for the wrong gene/assembly.
-V12_SEQUENCE_SOURCE_OVERRIDES: Dict[str, List[Dict[str, Any]]] = {
+SEQUENCE_SOURCE_OVERRIDES: Dict[str, List[Dict[str, Any]]] = {
     "DHRS7": [
         {
             "species": "bos_taurus",
@@ -3503,15 +3501,15 @@ V12_SEQUENCE_SOURCE_OVERRIDES: Dict[str, List[Dict[str, Any]]] = {
 }
 
 
-def apply_v12_sequence_source_overrides(records: List[SeqRecord],
+def apply_sequence_source_overrides(records: List[SeqRecord],
                                         seq_df: pd.DataFrame,
                                         gene_symbol: Optional[str]) -> Tuple[List[SeqRecord], pd.DataFrame]:
-    """V12: replace a species' Ensembl translation with a UniProt isoform of the
+    """replace a species' Ensembl translation with a UniProt isoform of the
     same gene so it survives the reference-length filter and carries a real
     structure. Gated by gene symbol AND the record's Ensembl protein id so it
     never fires for the wrong gene/assembly. Non-fatal: on any fetch failure the
     original Ensembl sequence is kept."""
-    overrides = V12_SEQUENCE_SOURCE_OVERRIDES.get(str(gene_symbol or "").strip().upper())
+    overrides = SEQUENCE_SOURCE_OVERRIDES.get(str(gene_symbol or "").strip().upper())
     if not overrides or not records:
         return records, seq_df
     if seq_df is not None and not seq_df.empty:
@@ -3533,7 +3531,7 @@ def apply_v12_sequence_source_overrides(records: List[SeqRecord],
             break
         if matched_record is None:
             emit_log(
-                f"V12 sequence override [{gene_symbol}]: no {target_species} record matched "
+                f"sequence override [{gene_symbol}]: no {target_species} record matched "
                 f"{match_ids or 'species'}; leaving Ensembl sequence in place."
             )
             continue
@@ -3542,20 +3540,20 @@ def apply_v12_sequence_source_overrides(records: List[SeqRecord],
             new_seq = str(((entry or {}).get("sequence") or {}).get("value") or "").strip().upper()
         except Exception as exc:  # noqa: BLE001
             emit_log(
-                f"V12 sequence override [{gene_symbol}]: UniProt fetch for {accession} failed "
+                f"sequence override [{gene_symbol}]: UniProt fetch for {accession} failed "
                 f"({exc}); keeping Ensembl sequence."
             )
             continue
         if not new_seq:
             emit_log(
-                f"V12 sequence override [{gene_symbol}]: UniProt {accession} returned no sequence; "
+                f"sequence override [{gene_symbol}]: UniProt {accession} returned no sequence; "
                 f"keeping Ensembl sequence."
             )
             continue
         old_len = len(str(matched_record.seq))
         matched_record.seq = Seq(new_seq)
         emit_log(
-            f"V12 sequence override [{gene_symbol}]: {target_species} {old_len} aa -> "
+            f"sequence override [{gene_symbol}]: {target_species} {old_len} aa -> "
             f"UniProt {accession} {len(new_seq)} aa. {override.get('note', '')}".strip()
         )
         if seq_df is not None and not seq_df.empty and "species" in seq_df.columns:
@@ -3581,11 +3579,11 @@ def filter_records_by_reference_length(records: List[SeqRecord],
                                        keep_species_whitelist: Optional[Sequence[str]] = None) -> Tuple[List[SeqRecord], pd.DataFrame]:
     """Reject protein sequences whose ungapped length differs too much from the reference.
 
-    For PLA2G4A/cPLA2alpha this keeps proteins within 749 +/- 30 aa by default.
-    The reference sequence itself is always kept.
+    With the default 30% window and the 339-aa human DHRS7 reference this keeps
+    proteins within roughly 237-441 aa. The reference sequence is always kept.
 
     `keep_species_whitelist` is an optional iterable of species names that
-    bypass the length filter (V9.8c addition). Useful for retaining truncated
+    bypass the length filter (addition). Useful for retaining truncated
     Ensembl gene models on lineages where the annotation is partial but the
     species is phylogenetically important (e.g. lamprey).
     """
@@ -3615,9 +3613,9 @@ def filter_records_by_reference_length(records: List[SeqRecord],
     # markedly shorter than the typical ortholog length (e.g. TP53 285 aa
     # vs the ~393 aa canonical), accept records that fall within max_dev of
     # the MEDIAN ortholog length as well. When the reference is at or above
-    # the median (the normal case for canonical Ensembl picks, e.g. PLA2G4A
-    # 749 aa) this branch never activates and the filter behaves identically
-    # to the original absolute-window form.
+    # the median (the normal case for canonical Ensembl picks, including
+    # DHRS7) this branch never activates and the filter behaves identically
+    # to the plain absolute-window form.
     ortholog_lengths = [
         len(str(rec.seq).replace('-', '').replace('.', '')) for rec in records
     ]
@@ -5136,7 +5134,7 @@ def fetch_alphafold_prediction(accession: str) -> Dict[str, Any]:
 def stage_reference_and_override_alphafold_models(outdir: Path,
                                                   reference_accession: Optional[str] = None,
                                                   reference_model_filename: Optional[str] = None) -> Dict[str, Any]:
-    """V9.8c durability fix: write_comparative_alphafold_secondary_structure_bundle
+    """durability fix: write_comparative_alphafold_secondary_structure_bundle
     only looks inside outdir/comparative_alphafold_models/ when deciding whether
     a species has its own AF PDB. Two edge cases would otherwise silently fall
     back to projection on every fresh pipeline run:
@@ -5144,10 +5142,10 @@ def stage_reference_and_override_alphafold_models(outdir: Path,
     1. The human reference PDB is downloaded as human_reference_alphafold_model.pdb
        in the main outdir. Copy it into the comparative cache under the canonical
        AF-{accession}-F1-model_v6.pdb naming so the human row escapes projection.
-    2. COMPARATIVE_ALPHAFOLD_ACCESSION_OVERRIDES re-points species (currently just
-       danio_rerio) at alternative accessions (currently P50392, the canonical
-       human PLA2G4A) that no row in protein_metadata.tsv owns. Download those
-       so the override-targeted PDB exists in the cache.
+    2. COMPARATIVE_ALPHAFOLD_ACCESSION_OVERRIDES re-points individual species at
+       alternative accessions that no row in protein_metadata.tsv owns (for
+       DHRS7: rattus D4A0T8, danio Q0P3U1, bos Q24K14). Download those so the
+       override-targeted PDB exists in the cache.
     """
     from gene_phylo_conservation_archive import (
         COMPARATIVE_ALPHAFOLD_MODEL_DIRNAME,
@@ -5207,7 +5205,7 @@ def fetch_comparative_alphafold_models(outdir: Path,
                                        protein_metadata_df: pd.DataFrame,
                                        reference_accession: Optional[str] = None,
                                        max_workers: int = 4) -> Dict[str, Any]:
-    """V9.8c: Download per-species AlphaFold PDBs into the comparative cache so
+    """Download per-species AlphaFold PDBs into the comparative cache so
     write_comparative_alphafold_secondary_structure_bundle can produce real
     per-species SS rather than the reference projection. Skips already-cached
     files, blank/missing UniProt accessions, and the reference accession (the
@@ -5736,7 +5734,7 @@ def write_summary_text(out_path: Path,
 
 def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback = None) -> None:
     pipeline_started = time.time()
-    # V11: +1 step for representative-property comparison,
+    # +1 step for representative-property comparison,
     # +1 step for motif evolution + lineage stabilization.
     total_steps = 14 + int(bool(getattr(args, "run_phylogeny", False)))
 
@@ -5755,9 +5753,9 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
 
     step_number = 1
     step_started = start_step(step_number, "Preparing output folder and checking tools")
-    # V11: register the active gene symbol so all figure/report labels are
-    # gene-agnostic (replaces V9.9's hard-coded "PLA2G4A" strings).
-    v11_set_active_gene(getattr(args, "gene_symbol", None))
+    # Register the active gene symbol so every figure and report label is
+    # gene-agnostic rather than hard-coded.
+    set_active_gene(getattr(args, "gene_symbol", None))
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -5818,11 +5816,11 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
         gene_label=getattr(args, "gene_label", None),
         fasta_object_metadata_path=getattr(args, "fasta_object_metadata_path", None),
     )
-    # V12: swap configured Ensembl translations for a same-gene UniProt isoform
+    # swap configured Ensembl translations for a same-gene UniProt isoform
     # (e.g. Bos taurus DHRS7 373 aa -> Q24K14 339 aa) so they clear the reference
     # length filter and gain a real structure, before anything downstream reads
     # the sequences or builds metadata.
-    records, seq_df = apply_v12_sequence_source_overrides(records, seq_df, args.gene_symbol)
+    records, seq_df = apply_sequence_source_overrides(records, seq_df, args.gene_symbol)
     seq_df.to_csv(outdir / "sequence_retrieval.tsv", sep="\t", index=False)
     ok_count = int((seq_df["status"] == "ok").sum()) if not seq_df.empty else 0
     finish_step(step_started, f"Sequence retrieval written with {ok_count} successful proteins")
@@ -6146,7 +6144,7 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
     )
     seq_df = merge_sequence_retrieval_metadata(seq_df, protein_metadata_df)
     seq_df.to_csv(outdir / "sequence_retrieval.tsv", sep="\t", index=False)
-    # V9.8c: enrich protein_metadata_df with UniProt accessions discovered via
+    # enrich protein_metadata_df with UniProt accessions discovered via
     # xref:{ensembl_protein_id} lookup so the per-species AlphaFold fetcher
     # below has accessions to fetch for non-human species (Ensembl ortholog
     # retrieval leaves uniprot_accession blank for most species).
@@ -6156,9 +6154,9 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
     )
     protein_metadata_df.to_csv(outdir / PROTEIN_METADATA_FILENAME, sep="\t", index=False)
     protein_xrefs_df.to_csv(outdir / PROTEIN_XREFS_FILENAME, sep="\t", index=False)
-    # V9.8c: fetch each species' own AlphaFold PDB so the comparative SS bundle
+    # fetch each species' own AlphaFold PDB so the comparative SS bundle
     # reflects per-species structure (real helix boundaries) rather than the
-    # reference-projection fallback. V9.7 silently relied on a pre-populated
+    # reference-projection fallback. silently relied on a pre-populated
     # cache; this populates it explicitly.
     reference_accession = (
         alphafold_bundle_payload.get("uniprot_accession")
@@ -6170,7 +6168,7 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
         reference_accession=reference_accession,
         max_workers=4,
     )
-    # V9.8c durability: copy the human reference PDB into the comparative cache
+    # durability: copy the human reference PDB into the comparative cache
     # and fetch override-targeted accessions (e.g. P50392 for the danio_rerio
     # override) so the SS bundle does NOT fall back to projection for the human
     # or danio rows on a fresh pipeline run. Without this both rows look
@@ -6214,34 +6212,34 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
     )
 
     # ------------------------------------------------------------------ #
-    # V11 new step: representative property comparison vs human         #
+    # new step: representative property comparison vs human         #
     # ------------------------------------------------------------------ #
     step_number += 1
     step_started = start_step(
         step_number,
         "Picking clade representatives and computing net-charge / aromaticity tracks",
     )
-    v11_property_window = getattr(args, "v11_property_window", V11_DEFAULT_PROPERTY_WINDOW)
-    v11_mandatory_focus = tuple(getattr(args, "v11_focus_species", V11_MANDATORY_FOCUS_SPECIES) or V11_MANDATORY_FOCUS_SPECIES)
-    v11_summary = v11_write_representative_comparison_outputs(
+    property_window = getattr(args, "property_window", DEFAULT_PROPERTY_WINDOW)
+    mandatory_focus = tuple(getattr(args, "focus_species", MANDATORY_FOCUS_SPECIES) or MANDATORY_FOCUS_SPECIES)
+    summary = write_representative_comparison_outputs(
         outdir=outdir,
         reference_projected_alignment=reference_projected_alignment,
         reference_species=reference_species,
         taxonomy_lookup=taxonomy_lookup,
-        smoothing_window=v11_property_window,
-        always_include=v11_mandatory_focus,
+        smoothing_window=property_window,
+        always_include=mandatory_focus,
     )
-    rep_count = v11_summary.get("representative_count", 0)
-    focused_ss = v11_summary.get("focused_ss_payload_summary") or {}
+    rep_count = summary.get("representative_count", 0)
+    focused_ss = summary.get("focused_ss_payload_summary") or {}
     focused_ss_count = focused_ss.get("focused_species_count")
-    msg_parts = [f"V11 representative comparison written: {rep_count} representative species"]
+    msg_parts = [f"representative comparison written: {rep_count} representative species"]
     if focused_ss_count is not None:
         msg_parts.append(f"focused SS bundle covers {focused_ss_count} species")
-    msg_parts.append(f"smoothing_window={v11_summary.get('smoothing_window')}aa")
+    msg_parts.append(f"smoothing_window={summary.get('smoothing_window')}aa")
     finish_step(step_started, "; ".join(msg_parts))
 
     # ------------------------------------------------------------------ #
-    # V11 new step: motif evolution + lineage stabilization              #
+    # new step: motif evolution + lineage stabilization              #
     # ------------------------------------------------------------------ #
     step_number += 1
     step_started = start_step(
@@ -6249,65 +6247,65 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
         "Computing motif evolution and lineage stabilization",
     )
     try:
-        reps_df_for_motifs = pd.read_csv(outdir / V11_DEFAULT_REPRESENTATIVE_CSV, sep="\t")
+        reps_df_for_motifs = pd.read_csv(outdir / DEFAULT_REPRESENTATIVE_CSV, sep="\t")
     except Exception:
         reps_df_for_motifs = None
-    v11_motif_summary = v11_write_motif_analysis_outputs(
+    motif_summary = write_motif_analysis_outputs(
         outdir=outdir,
         alignment=reference_projected_alignment,
         reference_species=reference_species,
         taxonomy_lookup=taxonomy_lookup,
         annotated_motifs_text=getattr(args, "annotated_motifs", None),
-        extra_motif_regex_text=getattr(args, "v11_extra_motif_regex", None),
-        ancestral_clades=tuple(getattr(args, "v11_stabilization_ancestral_clades", V11_DEFAULT_ANCESTRAL_CLADES) or V11_DEFAULT_ANCESTRAL_CLADES),
-        derived_clades=tuple(getattr(args, "v11_stabilization_derived_clades", V11_DEFAULT_DERIVED_CLADES) or V11_DEFAULT_DERIVED_CLADES),
+        extra_motif_regex_text=getattr(args, "extra_motif_regex", None),
+        ancestral_clades=tuple(getattr(args, "stabilization_ancestral_clades", DEFAULT_ANCESTRAL_CLADES) or DEFAULT_ANCESTRAL_CLADES),
+        derived_clades=tuple(getattr(args, "stabilization_derived_clades", DEFAULT_DERIVED_CLADES) or DEFAULT_DERIVED_CLADES),
         representatives_df=reps_df_for_motifs,
     )
     motif_msg = (
-        f"V11 motif analysis written: {v11_motif_summary.get('motif_total', 0)} motifs "
-        f"(user={v11_motif_summary.get('user_motif_count', 0)}, library={v11_motif_summary.get('library_motif_count', 0)}); "
-        f"stabilization={v11_motif_summary.get('stabilization_rows', 0)} positions "
-        f"(ancestral={'|'.join(v11_motif_summary.get('ancestral_clades', []))}, "
-        f"derived={'|'.join(v11_motif_summary.get('derived_clades', []))}); "
-        f"figures={v11_motif_summary.get('motif_figure_count', 0)}"
+        f"motif analysis written: {motif_summary.get('motif_total', 0)} motifs "
+        f"(user={motif_summary.get('user_motif_count', 0)}, library={motif_summary.get('library_motif_count', 0)}); "
+        f"stabilization={motif_summary.get('stabilization_rows', 0)} positions "
+        f"(ancestral={'|'.join(motif_summary.get('ancestral_clades', []))}, "
+        f"derived={'|'.join(motif_summary.get('derived_clades', []))}); "
+        f"figures={motif_summary.get('motif_figure_count', 0)}"
     )
     finish_step(step_started, motif_msg)
 
-    # V11 default per-clade consolidated summary: consensus AlphaFold SS +
+    # default per-clade consolidated summary: consensus AlphaFold SS +
     # mean net charge + domain architecture for every represented clade.
     try:
-        v11_clade_summary = v11_write_clade_consolidated_outputs(
+        clade_summary = write_clade_consolidated_outputs(
             outdir=outdir,
             alignment=reference_projected_alignment,
             reference_species=reference_species,
             gene_label=args.gene_symbol,
             taxonomy_lookup=taxonomy_lookup,
-            smoothing_window=v11_property_window,
+            smoothing_window=property_window,
         )
         emit_log(
-            f"V11 per-clade consolidated summary: {v11_clade_summary.get('clade_count', 0)} clades, "
-            f"{v11_clade_summary.get('per_clade_ss_rows', 0)} SS rows, "
-            f"{v11_clade_summary.get('domain_span_count', 0)} domain spans."
+            f"per-clade consolidated summary: {clade_summary.get('clade_count', 0)} clades, "
+            f"{clade_summary.get('per_clade_ss_rows', 0)} SS rows, "
+            f"{clade_summary.get('domain_span_count', 0)} domain spans."
         )
     except Exception as exc:
-        emit_log(f"V11 per-clade consolidated summary failed: {exc}")
+        emit_log(f"per-clade consolidated summary failed: {exc}")
 
-    # V11 interactive 3D structure overlay: paint per-clade identity onto the
+    # interactive 3D structure overlay: paint per-clade identity onto the
     # human reference AlphaFold model (3Dmol.js viewer).
     try:
-        v11_overlay = v11_write_structure_overlay(
+        overlay = write_structure_overlay(
             outdir=outdir,
             alignment=reference_projected_alignment,
             reference_species=reference_species,
             gene_label=args.gene_symbol,
             taxonomy_lookup=taxonomy_lookup,
         )
-        if v11_overlay.get("available"):
-            emit_log(f"V11 structure overlay written: {v11_overlay.get('html_path')}")
+        if overlay.get("available"):
+            emit_log(f"structure overlay written: {overlay.get('html_path')}")
         else:
-            emit_log(f"V11 structure overlay skipped: {v11_overlay.get('reason')}")
+            emit_log(f"structure overlay skipped: {overlay.get('reason')}")
     except Exception as exc:
-        emit_log(f"V11 structure overlay failed: {exc}")
+        emit_log(f"structure overlay failed: {exc}")
 
     step_number += 1
     step_started = start_step(step_number, "Rendering figures and writing summary files")
@@ -6325,20 +6323,20 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
             tree_nomenclature=tree_nomenclature_payload,
             clade_mya=parse_site_clade_mya(getattr(args, "site_clade_mya", None)),
         )
-        # V11 paper-quality tree: clade-colored tips, representatives bolded.
-        v11_reps_path = outdir / V11_DEFAULT_REPRESENTATIVE_CSV
-        v11_reps_df = pd.read_csv(v11_reps_path, sep="\t") if v11_reps_path.exists() else None
+        # paper-quality tree: clade-colored tips, representatives bolded.
+        reps_path = outdir / DEFAULT_REPRESENTATIVE_CSV
+        reps_df = pd.read_csv(reps_path, sep="\t") if reps_path.exists() else None
         try:
-            v11_plot_paper_quality_tree_svg(
+            plot_paper_quality_tree_svg(
                 treefile,
-                outdir / "v11_phylo_tree_paper_quality.svg",
-                representatives_df=v11_reps_df,
+                outdir / "phylo_tree_paper_quality.svg",
+                representatives_df=reps_df,
                 taxonomy_lookup=taxonomy_lookup,
-                title=f"{args.gene_symbol} protein phylogeny — paper-quality (V11)",
+                title=f"{args.gene_symbol} protein phylogeny — paper-quality ",
                 show_bootstrap_threshold=70.0,
             )
         except Exception as exc:
-            emit_log(f"V11 paper-quality tree render failed: {exc}")
+            emit_log(f"paper-quality tree render failed: {exc}")
     if not getattr(args, "figure_only", False):
         plot_conservation_svg(
             conservation_df,
@@ -6438,22 +6436,22 @@ def run_pipeline(args: argparse.Namespace, progress_callback: ProgressCallback =
         f"interactive report written to {archive_result['html_path']}",
     )
 
-    # V11 functional-divergence pilot. Best-effort: any missing optional
+    # functional-divergence pilot. Best-effort: any missing optional
     # package (umap / openmm / prody / scipy) only triggers a per-sub-script
-    # skip — the pilot still produces V11_summary.html with whatever
-    # artefacts succeeded. Disabled by --skip_v11_pilot.
-    if not getattr(args, "skip_v11_pilot", False):
+    # skip — the pilot still produces summary.html with whatever
+    # artefacts succeeded. Disabled by --skip_pilot.
+    if not getattr(args, "skip_pilot", False):
         try:
             import subprocess
-            pilot_path = Path(__file__).resolve().parent / "_v11_pilot.py"
+            pilot_path = Path(__file__).resolve().parent / "_pilot.py"
             if pilot_path.exists():
-                emit_log("Running V11 functional-divergence pilot...")
+                emit_log("Running functional-divergence pilot...")
                 subprocess.run(
                     [sys.executable, str(pilot_path), str(outdir)],
                     cwd=str(pilot_path.parent),
                 )
         except Exception as exc:  # noqa: BLE001
-            emit_log(f"V11 pilot warning (continuing): {exc}")
+            emit_log(f"pilot warning (continuing): {exc}")
 
     update_status("Finished")
     emit_log(f"Pipeline completed in {format_elapsed(time.time() - pipeline_started)}.")
@@ -6541,8 +6539,8 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Species names that always pass the length filter even when their "
             "Ensembl gene model is truncated. Defaults to "
-            f"{', '.join(DEFAULT_LENGTH_FILTER_KEEP_SPECIES)} (lamprey's PLA2G4A "
-            "model is 302 aa vs human 749 aa). Pass an empty list to disable."
+            f"{', '.join(DEFAULT_LENGTH_FILTER_KEEP_SPECIES)} (the lamprey gene "
+            "model is often a truncated prediction). Pass an empty list to disable."
         ),
     )
     parser.add_argument("--fourier_terms", type=int, default=18, help="Number of low-frequency Fourier terms retained for smoothed clade conservation profiles")
@@ -6552,76 +6550,76 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--clade_divergence_delta", type=float, default=0.20, help="Minimum negative difference from the global identity profile for clade-specific divergent region calls")
     parser.add_argument("--export_pymol", action="store_true", help="Write a PyMOL coloring script using human-reference conservation")
     parser.add_argument(
-        "--skip_v11_pilot",
+        "--skip_pilot", dest="skip_pilot",
         action="store_true",
         help=(
-            "V11: skip the functional-divergence pilot at end of pipeline "
+            "skip the functional-divergence pilot at end of pipeline "
             "(catalytic integrity, localization signals, ANM, UMAP, radial tree, MD proxy). "
-            "Pilot otherwise runs by default and writes V11_summary.html + V11_*.csv into outdir."
+            "Pilot otherwise runs by default and writes its summary and CSV tables into outdir."
         ),
     )
-    # V11: representative property comparison knobs.
+    # representative property comparison knobs.
     parser.add_argument(
-        "--v11_property_window",
+        "--property_window", dest="property_window",
         type=int,
-        default=V11_DEFAULT_PROPERTY_WINDOW,
-        help="V11: sliding-window size (residues) for the per-species net-charge and aromaticity tracks (default 5).",
+        default=DEFAULT_PROPERTY_WINDOW,
+        help="sliding-window size (residues) for the per-species net-charge and aromaticity tracks (default 5).",
     )
     parser.add_argument(
-        "--v11_focus_species",
+        "--focus_species", dest="focus_species",
         nargs="*",
-        default=list(V11_MANDATORY_FOCUS_SPECIES),
+        default=list(MANDATORY_FOCUS_SPECIES),
         help=(
-            "V11: species that should always be retained in the focused comparative view "
+            "species that should always be retained in the focused comparative view "
             "(net-charge, aromaticity, SS) even if they are not the most-conserved representative "
             "of their broad clade. Default: homo_sapiens danio_rerio."
         ),
     )
-    # V11 motif & lineage-stabilization flags.
+    # motif & lineage-stabilization flags.
     parser.add_argument(
         "--annotated_motifs",
         dest="annotated_motifs",
         default=None,
         help=(
-            "V11: comma-separated motif ranges to investigate at the reference "
-            "(human) ungapped coordinates, e.g. '263-269:cPLA2_PL_rich_263_269,500-505:label_b'. "
+            "comma-separated motif ranges to investigate at the reference "
+            "(human) ungapped coordinates, e.g. '120-130:label_a,300-305:label_b'. "
             "No function is assumed; the label is whatever you write. Pure inspection."
         ),
     )
     parser.add_argument(
-        "--v11_extra_motif_regex",
+        "--extra_motif_regex", dest="extra_motif_regex",
         default=None,
         help=(
-            "V11: extra regex patterns to add to the curated motif library, "
+            "extra regex patterns to add to the curated motif library, "
             "comma-separated as 'name1:regex1,name2:regex2'. Applied to the upper-case "
             "ungapped human reference sequence."
         ),
     )
     parser.add_argument(
-        "--v11_stabilization_ancestral_clades",
+        "--stabilization_ancestral_clades", dest="stabilization_ancestral_clades",
         nargs="*",
         default=None,
         help=(
-            "V11: broad clades treated as the 'ancestral' bucket when computing "
+            "broad clades treated as the 'ancestral' bucket when computing "
             "the lineage stabilization score H_ancestral - H_derived. "
             "Default: Cyclostomata Tunicata Chondrichthyes."
         ),
     )
     parser.add_argument(
-        "--v11_stabilization_derived_clades",
+        "--stabilization_derived_clades", dest="stabilization_derived_clades",
         nargs="*",
         default=None,
         help=(
-            "V11: broad clades treated as the 'derived' bucket for the "
+            "broad clades treated as the 'derived' bucket for the "
             "stabilization score. Default: Mammalia Aves Reptilia."
         ),
     )
-    # --- V11.1 Functional Divergence & Regulatable Signal Module --------- #
+    # --- .1 Functional Divergence & Regulatable Signal Module --------- #
     parser.add_argument(
         "--subgroup_a",
         default=None,
         help=(
-            "V11.1: comma-separated species list for subgroup A in the "
+            ".1: comma-separated species list for subgroup A in the "
             "Subgroup-Discriminating Position (SDP) analyzer "
             "(e.g. 'homo_sapiens,danio_rerio'). Pair with --subgroup_b."
         ),
@@ -6629,36 +6627,36 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--subgroup_b",
         default=None,
-        help="V11.1: comma-separated species list for subgroup B.",
+        help=".1: comma-separated species list for subgroup B.",
     )
     parser.add_argument(
         "--subgroup_label_a",
         default="A",
-        help="V11.1: short label for subgroup A, used in output filenames.",
+        help=".1: short label for subgroup A, used in output filenames.",
     )
     parser.add_argument(
         "--subgroup_label_b",
         default="B",
-        help="V11.1: short label for subgroup B, used in output filenames.",
+        help=".1: short label for subgroup B, used in output filenames.",
     )
     parser.add_argument(
         "--diff_species",
         default=None,
         help=(
-            "V11.1: pair of species 'A,B' for the pairwise diff report "
-            "(e.g. 'mus_musculus,homo_sapiens'). Emits v11_species_diff_<A>_vs_<B>.csv "
+            ".1: pair of species 'A,B' for the pairwise diff report "
+            "(e.g. 'mus_musculus,homo_sapiens'). Emits species_diff_<A>_vs_<B>.csv "
             "+ HTML."
         ),
     )
     parser.add_argument(
-        "--v11_detect_idr",
+        "--detect_idr", dest="detect_idr",
         action="store_true",
-        help="V11.1: emit per-species IDR predictions (Wootton-Federhen+composition).",
+        help=".1: emit per-species IDR predictions (Wootton-Federhen+composition).",
     )
     parser.add_argument(
-        "--v11_detect_pocket",
+        "--detect_pocket", dest="detect_pocket",
         action="store_true",
-        help="V11.1: emit AlphaFold substrate-pocket residues CSV (default ON when active site is known).",
+        help=".1: emit AlphaFold substrate-pocket residues CSV (default ON when active site is known).",
     )
     return parser
 

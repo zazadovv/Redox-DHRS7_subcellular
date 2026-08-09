@@ -1,75 +1,69 @@
-# DHRS7 species-snapshot figure — Methods
+# DHRS7 cross-species alignment -- Methods (2026-08-09 19:42 UTC)
 
-## Sequence retrieval and alignment
+## Ortholog retrieval
+DHRS7 orthologs were enumerated from Ensembl through the REST homology endpoint
+(`type=orthologues`) starting from the human gene, returning both one2one and
+one2many relationships across sampled vertebrates (253 orthologs). One
+representative protein was taken per species as the translation of the Ensembl
+canonical transcript; where a species carried more than one ortholog, the
+candidate closest to the human reference in length and percent identity was
+used. UniProt was queried for each protein's reviewed accession and
+cross-references. For *Bos taurus* the Ensembl canonical translation
+(ENSBTAP00000086519, 373 aa) is a longer isoform than the reference, so the
+reference-length UniProt entry Q24K14 (339 aa, AlphaFold model AF-Q24K14-F1) was
+used so that cattle is represented by a comparable sequence and structure.
 
-Analyses used Python v.3.10.20. Human *DHRS7* orthologues were retrieved from
-Ensembl (release 116) via the REST homology endpoint (`type=orthologues`) using
-*requests* v.2.33.1, yielding 253 one2one and one2many orthologues; the
-representative protein per species was the Ensembl canonical-transcript
-translation. Proteins within ±30 residues of the 339-residue human reference were
-retained (n = 187) and cross-referenced to UniProt. The *Bos taurus* sequence was
-taken from UniProt Q24K14 (339 aa) rather than the 373-aa Ensembl translation
-(ENSBTAP00000086519). Sequences were aligned with MUSCLE v.5.3 (build d9725ac;
-`muscle -align`). Parsing and pairwise identity (global alignment, standard
-substitution matrices) used Biopython v.1.87; tables and numerics used pandas
-v.2.3.3 and NumPy v.1.24.4.
+## Sequence selection and alignment
+Sequences were restricted to within +/- 30 aa of the human reference length and
+aligned with MUSCLE v5 (`muscle.exe`, default settings; a single deterministic
+alignment, no replicate or ensemble runs). The resulting alignment
+(835 columns) was projected onto human reference
+positions (339 columns) for numbering.
+Percent identities to the human reference were computed from global
+(Needleman-Wunsch) pairwise alignments with the BLOSUM62 matrix (gap opening
+-10, gap extension -0.5).
 
-## Structure, secondary structure and figure
+## Structure and secondary structure
+The AlphaFold model of each species was retrieved from the AlphaFold Protein
+Structure Database. These models provide predicted coordinates and a per-residue
+confidence estimate (pLDDT); they carry no secondary-structure annotation, so
+secondary structure was assigned from the model coordinates.
+Each residue was classified from its backbone phi/psi torsion angles using
+the standard Ramachandran windows, with helices shorter than four residues
+and strands shorter than three shown as loop. Runs are reported as the
+torsions describe them: a residue falling outside a window breaks the run
+and the break is retained rather than smoothed over.
+The alternative assignment from hydrogen bonding (Kabsch-Sander) is computed in the same run
+and can be displayed instead; both are stored with the alignment.
+Assignments were taken from each species' own model and placed on the alignment
+shown in the figure, so the structure track follows the residues that are drawn.
 
-Per-species AlphaFold models were obtained from the AlphaFold Protein Structure
-Database (model v6) by UniProt accession. Secondary structure was assigned from
-backbone φ/ψ torsion angles (helix/strand/loop, by Ramachandran region) and
-mapped to human positions via pairwise alignment of model to aligned sequence.
-Conservation followed the Clustal `* : .` convention and columns were scored by
-exact residue identity across the five species. Auxiliary panels used
-Matplotlib v.3.10.8 (Agg). The workflow — retrieval, alignment, structural
-annotation, figure and interactive HTML browser — runs from a single script; the
-environment (Python v.3.10.20 and the packages above) is provided as
-`environment.yml` and a pip requirements file. Orthology, alignment, structure
-prediction and structural annotation used established tools (Ensembl, UniProt,
-MUSCLE, the AlphaFold Protein Structure Database and Biopython); no new algorithm
-was introduced.
+## Species compared in the figure
+All retrieved orthologs are aligned and stored, and the residue-level comparison
+shown in the figure uses: mus_musculus, rattus_norvegicus, bos_taurus, danio_rerio, homo_sapiens. These were re-aligned on their own with MUSCLE
+(339 columns, all residues, natural gaps) so the
+panel shows the gaps that exist between these sequences rather than gaps
+inherited from the full alignment; human is the reference row. Each species'
+secondary structure was placed on this alignment directly from its own model, so
+the structure track follows the residues that are drawn. Secondary structure was
+available for 187 records overall.
 
-## Species and identifiers (compared in the figure)
+## Figure annotations
+* Grey glyphs above each row are that species' AlphaFold secondary structure
+  (coil = helix, arrow = strand, line = loop).
+* Frames mark columns where *Homo sapiens* and *Danio rerio* carry the identical
+  residue while every rodent in the panel differs.
+* Asterisks mark the subset of those columns where *Bos taurus* also shares the
+  residue, i.e. positions identical in human, zebrafish and cattle while both
+  rodents diverge.
+* The conservation line follows the Clustal convention: `*` identical, `:`
+  strongly similar, `.` weakly similar across the drawn rows.
 
-| Species | Ensembl gene | Ensembl protein | UniProt | AlphaFold model | Length (aa) |
-|---|---|---|---|---|---|
-| *Homo sapiens* (human) | ENSG00000100612 | ENSP00000216500 | Q9Y394 | AF-Q9Y394-F1 | 339 |
-| *Mus musculus* (mouse) | ENSMUSG00000021094 | ENSMUSP00000021512 | Q9CXR1 | AF-Q9CXR1-F1 | 338 |
-| *Rattus norvegicus* (rat) | ENSRNOG00000005589 | ENSRNOP00000007645 | D4A0T8 | AF-D4A0T8-F1 | 338 |
-| *Bos taurus* (cattle) | ENSBTAG00000020729 | ENSBTAP00000086519 | Q24K14 | AF-Q24K14-F1 | 339 |
-| *Danio rerio* (zebrafish) | ENSDARG00000003444 | ENSDARP00000004163 | Q0P3U1 | AF-Q0P3U1-F1 | 338 |
+## Software
+Python 3.10.20, biopython 1.87, pandas 2.3.3, numpy 1.24.4, matplotlib 3.10.8, requests 2.33.1, muscle 5.3.win64 [d9725ac]
+The exact versions above were recorded from the environment that produced these
+files and are repeated in `environment.txt` beside them.
 
-For *Bos taurus*, the protein sequence and AlphaFold model correspond to UniProt
-Q24K14 (the Ensembl protein ENSBTAP00000086519 cross-references UniProt
-A0AAA9SJP4, a 373-residue translation). AlphaFold model files: `AF-<accession>-F1-model_v6.pdb`.
-
-## Figure display and comparative highlighting
-
-Each row shows one species' reference-projected sequence with residues coloured
-by amino acid; the human reference is the lowest row. Above each row the species'
-AlphaFold secondary structure is drawn in grey (α-helices as coils, β-strands as
-arrows and loops as lines). A conservation row beneath the alignment marks
-positions identical (`*`), strongly similar (`:`) or weakly similar (`.`) across
-the five species (Clustal convention). Positions of interest are highlighted by
-two nested criteria applied to informative residues (gaps and undetermined
-positions excluded): columns at which *Homo sapiens* and *Danio rerio* carry the
-identical residue while both rodents (*Mus musculus* and *Rattus norvegicus*)
-differ are outlined with a black frame; the subset of these at which *Bos taurus*
-also carries that residue — identity across all three catalytically active
-species with divergence in both rodents — is additionally marked with a red
-asterisk.
-
-## Software versions
-
-Python v.3.10.20; requests v.2.33.1; Biopython v.1.87; pandas v.2.3.3; NumPy
-v.1.24.4; Matplotlib v.3.10.8; MUSCLE v.5.3. Data sources: Ensembl release 116;
-UniProt; AlphaFold Protein Structure Database model version v6. Insert the
-corresponding citations (Ensembl, UniProt, MUSCLE, AlphaFold and the AlphaFold DB,
-Biopython) in the reference list.
-
-## Reproducibility
-
-`python Reproduce_DHRS7_Figure.py` reproduces the figure, this methods file
-and the interactive browser from Ensembl / UniProt / AlphaFold retrieval and
-MUSCLE alignment. Figure: `plots/dhrs7_species_snapshot.svg`.
+## Availability
+`python dhrs7_alignment.py` rebuilds the alignment, this file and the figure from
+the source databases. Figure: `plots/dhrs7_species_snapshot.svg`.

@@ -11,10 +11,18 @@ muscle.exe
 ca_bundle.pem
 .env
 
+# Run artifacts (regenerated on every run; not deliverables)
+phylo_runs.sqlite
+run.log
+run.err.log
+pid.txt
+
 # OS cruft
 .DS_Store
 Thumbs.db
 
-# A freshly regenerated run (delete this line if you want to commit new output).
-# The reference run is committed as DHRS7_Output/ ; a re-run overwrites it.
+# DHRS7_Output/ holds a completed reference run and is committed on purpose, so
+# the alignment and figure can be inspected without running anything. A new run
+# overwrites it in place. Uncomment the line below to keep runs out of the
+# repository instead.
 # DHRS7_Output/

@@ -15,7 +15,7 @@ The panel compares five species, drawn in this order:
 |-----|---------|--------|
 | 1 | mouse — *Mus musculus* | ENSMUSP00000021512 |
 | 2 | rat — *Rattus norvegicus* | ENSRNOP00000007645 |
-| 3 | cattle — *Bos taurus* | ENSBTAP00000086519  |
+| 3 | cattle — *Bos taurus* | ENSBTAP00000086519 / UniProt Q24K14 |
 | 4 | zebrafish — *Danio rerio* | ENSDARP00000004163 |
 | 5 | human — *Homo sapiens* (reference) | ENSP00000216500 |
 
@@ -48,22 +48,29 @@ pip, any Python 3.9+ environment with `biopython pandas numpy matplotlib
 requests` works just as well.
 
 **3. Install MUSCLE.** This is a standalone program, not a Python package, and
-the alignment cannot run without it.
+the alignment cannot run without it. It must be **MUSCLE v5** — the older v3.8
+uses different, incompatible options (`-in`/`-out` instead of `-align`) and would
+produce a different alignment, so `--check` refuses it and asks for v5.
 
 - macOS and Linux: `conda install -c bioconda muscle`
-- Windows: download `muscle.exe` from
-  <https://github.com/rcedgar/muscle/releases>, then either put it on `PATH`,
-  drop it in a folder called `tools` beside the scripts, or set `MUSCLE_EXE` to
-  its full path.
+- Windows: download the executable from
+  <https://github.com/rcedgar/muscle/releases>. It keeps its own name (for
+  example `muscle-win64.v5.3.exe`) — that is fine; drop it in a folder called
+  `tools` beside the scripts, or anywhere on `PATH`, and it is picked up
+  automatically. There is no Windows build on bioconda, so use the release page.
 - Apple Silicon: if conda offers no `osx-arm64` build, take the macOS binary
   from the same page, then `chmod +x muscle`, and if Gatekeeper blocks it,
   `xattr -d com.apple.quarantine muscle`.
 
-The scripts look for MUSCLE in that order: the `--muscle` option, then
-`MUSCLE_EXE`, then `PATH`, then a `tools` folder — checked beside the scripts and
-in the next few directories above them, so a shared `tools` folder kept alongside
-the project is found too. `--check` prints every location it looked in when it
-cannot find one.
+The scripts look for MUSCLE in this order: the `--muscle` option, then
+`MUSCLE_EXE`, then `PATH`, then the bin folders of the Python environment you are
+running in (a `conda install`-ed MUSCLE is found even without activating the
+environment), then a `tools` folder — checked beside the scripts and in the next
+few directories above them, so a shared `tools` folder kept alongside the project
+is found too. A file whose name simply starts with `muscle` counts, so the
+release binary works under its downloaded name. `--check` prints every folder it
+looked in when it cannot find one; the window (`MSA_GUI.py`) also has a **Browse**
+button to point straight at the file.
 
 **4. Check the setup before running anything.**
 

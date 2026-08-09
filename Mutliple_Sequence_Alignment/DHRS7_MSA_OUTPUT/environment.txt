@@ -1,18 +1,18 @@
 Environment used for this run
 =============================
 
-recorded   2026-08-09 19:42 UTC
+recorded   2026-08-09 21:11 UTC
 platform   Windows 10 (AMD64)
 python     3.10.20
 
 packages
   biopython    1.87
   pandas       2.3.3
-  numpy        1.24.4
+  numpy        2.2.6
   matplotlib   3.10.8
   requests     2.33.1
 
 external
   muscle       muscle 5.3.win64 [d9725ac]
-  muscle path  muscle.exe
+  muscle path  muscle-win64.v5.3 (1).exe
 

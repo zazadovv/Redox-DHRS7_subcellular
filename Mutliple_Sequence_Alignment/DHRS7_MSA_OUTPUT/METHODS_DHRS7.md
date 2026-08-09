@@ -1,4 +1,4 @@
-# DHRS7 cross-species alignment -- Methods (2026-08-09 19:42 UTC)
+# DHRS7 cross-species alignment -- Methods (2026-08-09 21:11 UTC)
 
 ## Ortholog retrieval
 DHRS7 orthologs were enumerated from Ensembl through the REST homology endpoint
@@ -15,7 +15,7 @@ used so that cattle is represented by a comparable sequence and structure.
 
 ## Sequence selection and alignment
 Sequences were restricted to within +/- 30 aa of the human reference length and
-aligned with MUSCLE v5 (`muscle.exe`, default settings; a single deterministic
+aligned with MUSCLE v5 (`muscle-win64.v5.3 (1).exe`, default settings; a single deterministic
 alignment, no replicate or ensemble runs). The resulting alignment
 (835 columns) was projected onto human reference
 positions (339 columns) for numbering.
@@ -60,7 +60,7 @@ available for 187 records overall.
   strongly similar, `.` weakly similar across the drawn rows.
 
 ## Software
-Python 3.10.20, biopython 1.87, pandas 2.3.3, numpy 1.24.4, matplotlib 3.10.8, requests 2.33.1, muscle 5.3.win64 [d9725ac]
+Python 3.10.20, biopython 1.87, pandas 2.3.3, numpy 2.2.6, matplotlib 3.10.8, requests 2.33.1, muscle 5.3.win64 [d9725ac]
 The exact versions above were recorded from the environment that produced these
 files and are repeated in `environment.txt` beside them.
 

@@ -145,36 +145,254 @@ def resolve_paths(outdir: Path) -> None:
 
 MUSCLE_SEARCH_LEVELS = 4  # this folder, then three above it
 
+# Non-executable extensions that a "muscle*" glob might otherwise pick up
+# (the release page also ships archives and notes next to the binary).
+_NON_BINARY_SUFFIXES = {".txt", ".md", ".zip", ".gz", ".tar", ".tgz", ".bz2",
+                        ".xz", ".pdf", ".html", ".htm", ".sha256", ".asc"}
 
-def muscle_search_paths() -> list[Path]:
-    """Everywhere MUSCLE is looked for beside the code, nearest first.
 
-    A working copy is often kept in a shared tools folder next to the project
-    rather than inside it, so the search climbs a few directories rather than
-    stopping at this one."""
-    places: list[Path] = []
+def _env_roots() -> list[Path]:
+    """Environment prefixes whose bin folders may hold a conda-installed MUSCLE.
+
+    Includes the interpreter's own prefix. When the GUI launches ``python.exe``
+    straight from a conda environment the environment is not activated, so its
+    Scripts/Library\\bin never reach PATH -- looking here finds MUSCLE anyway."""
+    roots: list[Path] = []
+    for root in (PHYLO_ENV, Path(sys.prefix), Path(sys.exec_prefix)):
+        if root and root not in roots:
+            roots.append(root)
+    return roots
+
+
+def muscle_search_dirs() -> list[Path]:
+    """Directories scanned for a MUSCLE executable, most specific first.
+
+    Two families: the bin folders of the environment the sub-steps run in, and
+    ``tools`` folders beside the project (a shared copy is often kept next to the
+    project rather than inside it, so the search climbs a few levels)."""
+    dirs: list[Path] = []
+    for root in _env_roots():
+        for rel in (".", "Library/bin", "Scripts", "bin",
+                    "Library/mingw-w64/bin", "Library/usr/bin"):
+            dirs.append(root / rel)
     base = SCRIPT_DIR
     for _ in range(MUSCLE_SEARCH_LEVELS):
-        for name in ("muscle.exe", "muscle"):
-            places.append(base / "tools" / name)
-            places.append(base / name)
+        dirs.append(base / "tools")
+        dirs.append(base)
         if base.parent == base:
             break
         base = base.parent
-    return places
+    seen: set = set()
+    unique: list[Path] = []
+    for directory in dirs:
+        try:
+            key = directory.resolve()
+        except OSError:
+            key = directory
+        if key not in seen:
+            seen.add(key)
+            unique.append(directory)
+    return unique
 
 
-def find_muscle(explicit: str | None = None) -> Path | None:
-    """--muscle, then MUSCLE_EXE, then PATH, then a tools folder nearby."""
+def _fixed_drive_roots() -> list[Path]:
+    """Root of every drive that exists (C:\\, D:\\, ... on Windows; / elsewhere)."""
+    roots: list[Path] = []
+    if os.name == "nt":
+        import string
+        for letter in string.ascii_uppercase:
+            root = Path(f"{letter}:\\")
+            try:
+                if root.exists():
+                    roots.append(root)
+            except OSError:
+                continue
+    else:
+        roots = [Path("/")]
+    return roots
+
+
+def _conda_env_bin_dirs(conda_root: Path) -> list[Path]:
+    """The bin folders of every environment under a conda installation."""
+    dirs: list[Path] = []
+    envs = conda_root / "envs"
+    try:
+        entries = list(envs.iterdir()) if envs.is_dir() else []
+    except OSError:
+        entries = []
+    for env in [conda_root] + entries:
+        try:
+            if env.is_dir():
+                for rel in (".", "Library/bin", "Scripts", "bin"):
+                    dirs.append(env / rel)
+        except OSError:
+            continue
+    return dirs
+
+
+def common_muscle_dirs() -> list[Path]:
+    """Likely install spots on every drive, plus every conda environment found.
+
+    This is the "look across all drives" search: it visits a curated set of
+    folders (drive roots, tools/muscle/bin, Program Files, Downloads) and the bin
+    folders of any conda installation on each drive and in the home directory,
+    rather than walking whole disks. It finds a MUSCLE that lives in another
+    environment even when a different interpreter is launched."""
+    dirs: list[Path] = []
+    conda_names = ("Conda", "Anaconda3", "anaconda3", "Miniconda3", "miniconda3",
+                   "ProgramData/Anaconda3", "ProgramData/Miniconda3")
+    for root in _fixed_drive_roots():
+        for rel in ("", "tools", "muscle", "bin",
+                    "Program Files/muscle", "Program Files (x86)/muscle"):
+            dirs.append(root / rel if rel else root)
+        for name in conda_names:
+            dirs += _conda_env_bin_dirs(root / name)
+    home = Path.home()
+    for rel in ("Downloads", "Desktop", "tools"):
+        dirs.append(home / rel)
+    for name in (".conda", "Anaconda3", "anaconda3", "Miniconda3", "miniconda3",
+                 "AppData/Local/miniconda3", "AppData/Local/Continuum/anaconda3"):
+        dirs += _conda_env_bin_dirs(home / name)
+    return dirs
+
+
+def deep_scan_for_muscle(time_budget_s: float = 25.0, max_depth: int = 7,
+                         announce=None) -> Path | None:
+    """Last resort: a bounded recursive walk of every drive.
+
+    Prunes system, recycle and package trees, follows no reparse points, caps
+    depth and total time, and returns the first MUSCLE executable found. Slow by
+    nature, so it is opt-in (``--scan-drives``) rather than part of every run."""
+    import time
+    skip = {"windows", "$recycle.bin", "system volume information", "$sysreset",
+            "node_modules", ".git", "__pycache__", "appdata", "winsxs",
+            "recovery", "perflogs", "msocache", "$windows.~ws", "$windows.~bt"}
+    start = time.monotonic()
+    for root in _fixed_drive_roots():
+        if announce:
+            announce(str(root))
+        root_depth = len(root.parts)
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            if time.monotonic() - start > time_budget_s:
+                if announce:
+                    announce(f"(stopped after {time_budget_s:.0f}s)")
+                return None
+            here = Path(dirpath)
+            if len(here.parts) - root_depth >= max_depth:
+                dirnames[:] = []
+                continue
+            dirnames[:] = [d for d in dirnames
+                           if d.lower() not in skip and not d.startswith("$")
+                           and not os.path.islink(os.path.join(dirpath, d))]
+            for name in filenames:
+                low = name.lower()
+                if not low.startswith("muscle"):
+                    continue
+                candidate = here / name
+                if _looks_like_binary(candidate):
+                    return candidate
+    return None
+
+
+def _looks_like_binary(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    if path.suffix.lower() in _NON_BINARY_SUFFIXES:
+        return False
+    if os.name != "nt" and not os.access(path, os.X_OK):
+        return False
+    return True
+
+
+def scan_dir_for_muscle(directory: Path) -> Path | None:
+    """A MUSCLE executable in one directory, exact name preferred.
+
+    Matches release binaries that keep their downloaded name too, e.g.
+    ``muscle-win64.v5.3.exe`` on Windows or ``muscle5.1.linux_intel64``."""
+    if not directory.is_dir():
+        return None
+    exact = directory / ("muscle.exe" if os.name == "nt" else "muscle")
+    if _looks_like_binary(exact):
+        return exact
+    pattern = "muscle*.exe" if os.name == "nt" else "muscle*"
+    matches = sorted(p for p in directory.glob(pattern) if _looks_like_binary(p))
+    return matches[0] if matches else None
+
+
+def _path_dirs() -> list[Path]:
+    """Directories on PATH, so a release binary that kept its own name
+    (e.g. muscle-win64.v5.3.exe) is found even though ``which`` cannot name it."""
+    dirs: list[Path] = []
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        entry = entry.strip().strip('"')
+        if entry:
+            dirs.append(Path(entry))
+    return dirs
+
+
+MUSCLE_REQUIRED_MAJOR = 5  # the pipeline uses v5's -align / -super5 options
+
+
+def muscle_version_info(path: Path | str) -> tuple[int | None, str | None]:
+    """(major version, first line of ``-version`` output), or (None, None).
+
+    MUSCLE v5 prints ``muscle 5.3.win64 [d9725ac]``; the old v3 prints
+    ``MUSCLE v3.8.31 by Robert C. Edgar``. The two use different, incompatible
+    command lines, so knowing the major version up front avoids a late failure."""
+    try:
+        finished = subprocess.run([str(path), "-version"],
+                                  capture_output=True, text=True, timeout=15)
+    except Exception:  # noqa: BLE001
+        return None, None
+    text = (finished.stdout or "") + "\n" + (finished.stderr or "")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    match = re.search(r"muscle\s+v?(\d+)\.", text, re.IGNORECASE)
+    return (int(match.group(1)) if match else None), (lines[0] if lines else None)
+
+
+def muscle_major_version(path: Path | str) -> int | None:
+    return muscle_version_info(path)[0]
+
+
+def find_muscle(explicit: str | None = None, deep: bool = False,
+                announce=None) -> Path | None:
+    """--muscle, then MUSCLE_EXE, then PATH, then the interpreter's environment,
+    a tools folder nearby, and common install spots on every drive -- matching
+    release binaries by name variant and preferring a v5 build. With ``deep``,
+    fall back to a bounded recursive walk of all drives."""
+    # An explicit choice (flag or env var) is honoured exactly, version aside.
     for candidate in (explicit, os.environ.get("MUSCLE_EXE")):
         if candidate and Path(candidate).exists():
             return Path(candidate)
-    on_path = shutil.which("muscle") or shutil.which("muscle.exe")
-    if on_path:
-        return Path(on_path)
-    for candidate in muscle_search_paths():
-        if candidate.exists():
+    # Collect auto-discovered candidates in priority order, de-duplicated.
+    candidates: list[Path] = []
+    for name in ("muscle", "muscle.exe", "muscle5", "muscle5.exe"):
+        on_path = shutil.which(name)
+        if on_path:
+            candidates.append(Path(on_path))
+    for directory in _path_dirs() + muscle_search_dirs() + common_muscle_dirs():
+        hit = scan_dir_for_muscle(directory)
+        if hit:
+            candidates.append(hit)
+    seen: set = set()
+    ordered: list[Path] = []
+    for candidate in candidates:
+        key = str(candidate).lower()
+        if key not in seen:
+            seen.add(key)
+            ordered.append(candidate)
+    # Prefer a v5 build; otherwise return the first found so the caller can
+    # report the version mismatch rather than silently using the wrong MUSCLE.
+    fallback: Path | None = None
+    for candidate in ordered:
+        if muscle_major_version(candidate) == MUSCLE_REQUIRED_MAJOR:
             return candidate
+        if fallback is None:
+            fallback = candidate
+    if fallback is not None:
+        return fallback
+    if deep:
+        return deep_scan_for_muscle(announce=announce)
     return None
 
 
@@ -763,10 +981,15 @@ MUSCLE_HELP = """MUSCLE v5 was not found. It is a separate program, not a Python
   package, and the alignment cannot run without it.
 
     macOS / Linux :  conda install -c bioconda muscle
-    Windows       :  download muscle.exe from
+    Windows       :  download the executable from
                      https://github.com/rcedgar/muscle/releases
-                     then put it on PATH, or in a "tools" folder beside this
-                     script, or set MUSCLE_EXE to its full path.
+
+  The download keeps its own name (e.g. muscle-win64.v5.3.exe); that is fine --
+  just drop it in a "tools" folder beside this script, or anywhere on PATH, and
+  it is picked up automatically. A conda-installed MUSCLE in this environment is
+  found even without activating it. To point straight at the file instead, set
+  MUSCLE_EXE to its full path, pass --muscle PATH, or use the Browse button in
+  the window (MSA_GUI.py).
 
   Apple Silicon: if conda has no osx-arm64 build, take the macOS binary from the
   same page, then  chmod +x muscle  (and  xattr -d com.apple.quarantine muscle
@@ -858,22 +1081,31 @@ def check_environment(verbose: bool = True) -> list[str]:
             problems.append(f"The {package} package is missing ({purpose}).")
 
     if MUSCLE_EXE:
-        release = "found"
-        try:
-            finished = subprocess.run([str(MUSCLE_EXE), "-version"],
-                                      capture_output=True, text=True, timeout=30)
-            first = (finished.stdout or finished.stderr or "").strip().splitlines()
-            if first:
-                release = first[0].strip()
-        except Exception:  # noqa: BLE001
-            pass
-        report.append(f"  MUSCLE       {release}")
+        major, version_line = muscle_version_info(MUSCLE_EXE)
+        report.append(f"  MUSCLE       {version_line or 'found'}")
         report.append(f"               {MUSCLE_EXE}")
+        if major is not None and major < MUSCLE_REQUIRED_MAJOR:
+            problems.append(
+                f"MUSCLE at {MUSCLE_EXE} is v{major}, but this pipeline needs "
+                f"MUSCLE v{MUSCLE_REQUIRED_MAJOR}. Versions 3 and 5 take different, "
+                f"incompatible options (v3 has no -align), and the reference figure "
+                f"was built with v5 -- v3 would produce a different alignment. "
+                f"Install v5, and if the v{major} copy stays on PATH point past it "
+                f"with --muscle PATH or MUSCLE_EXE.\n\n" + MUSCLE_HELP)
+        elif major is None:
+            report.append(f"               (could not read version; "
+                          f"v{MUSCLE_REQUIRED_MAJOR} is required)")
     else:
+        name_hint = "muscle.exe or muscle*.exe" if os.name == "nt" else "muscle or muscle*"
+        drive_count = len(_fixed_drive_roots())
         looked = ["  Looked for it here:",
                   f"    MUSCLE_EXE      {os.environ.get('MUSCLE_EXE') or 'not set'}",
-                  "    on PATH         not found"]
-        looked += [f"    {path}" for path in muscle_search_paths()]
+                  "    on PATH         not found",
+                  f"    in these folders (as {name_hint}):"]
+        looked += [f"      {directory}" for directory in muscle_search_dirs()]
+        looked.append(f"    plus common install spots and every conda environment "
+                      f"on {drive_count} drive(s).")
+        looked.append("    Add --scan-drives to search every drive top to bottom.")
         problems.append(MUSCLE_HELP + "\n\n" + "\n".join(looked))
 
     if verbose:
@@ -915,6 +1147,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
                         help="keep every file the shared pipeline can produce")
     parser.add_argument("--muscle", default=None, metavar="PATH",
                         help="path to the MUSCLE executable")
+    parser.add_argument("--scan-drives", action="store_true",
+                        help="if MUSCLE is not found the quick way, walk every "
+                             "drive to locate it (slower; use with --check)")
     parser.add_argument("--check", action="store_true",
                         help="report whether the environment is ready and exit")
     parser.add_argument("--ss", choices=("torsion", "hbond"), default="torsion",
@@ -937,6 +1172,14 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--species must name at least one species besides the human reference")
     SS_METHOD = args.ss
     MUSCLE_EXE = find_muscle(args.muscle)
+    if MUSCLE_EXE is None and args.scan_drives:
+        print("Scanning all drives for MUSCLE (this can take a moment) ...")
+        MUSCLE_EXE = find_muscle(args.muscle, deep=True,
+                                 announce=lambda where: print(f"  searching {where}"))
+        if MUSCLE_EXE:
+            print(f"  found: {MUSCLE_EXE}")
+        else:
+            print("  not found on any drive.")
     CA_BUNDLE = find_ca_bundle()
     keep_all = args.keep_all or bool(os.environ.get("DHRS7_KEEP_ALL"))
 

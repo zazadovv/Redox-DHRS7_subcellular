@@ -128,7 +128,12 @@ class AlignmentWindow:
         ttk.Label(box, text="MUSCLE").grid(row=row, column=0, sticky="w", pady=3)
         self.muscle_var = tk.StringVar()
         ttk.Entry(box, textvariable=self.muscle_var).grid(row=row, column=1, sticky="ew", padx=(8, 6))
-        ttk.Button(box, text="Browse...", command=self.pick_muscle).grid(row=row, column=2, sticky="w")
+        muscle_btns = ttk.Frame(box)
+        muscle_btns.grid(row=row, column=2, sticky="w")
+        ttk.Button(muscle_btns, text="Browse...", command=self.pick_muscle).pack(side="left")
+        self.scan_button = ttk.Button(muscle_btns, text="Search drives",
+                                      command=self.on_scan_drives)
+        self.scan_button.pack(side="left", padx=(4, 0))
         row += 1
 
         strip = ttk.Frame(box)
@@ -246,9 +251,15 @@ class AlignmentWindow:
         if found:
             self.muscle_var.set(str(found))
             self.write(f"MUSCLE found: {found}")
+            major = driver.muscle_major_version(found)
+            if major is not None and major < driver.MUSCLE_REQUIRED_MAJOR:
+                self.write(f"  WARNING: this is MUSCLE v{major}; the pipeline needs "
+                           f"v{driver.MUSCLE_REQUIRED_MAJOR}. It will stop before "
+                           "aligning. Install v5 (see the README), then use Browse "
+                           "or Search drives to point at it.")
         else:
             self.muscle_var.set("")
-            self.write("MUSCLE was not found. Use Browse to point at muscle.exe, "
+            self.write("MUSCLE was not found. Use Browse to point at the executable, "
                        "or install it (see the README).")
 
     def pick_outdir(self) -> None:
@@ -263,6 +274,37 @@ class AlignmentWindow:
             filetypes=[("MUSCLE", "muscle.exe muscle*"), ("All files", "*.*")])
         if chosen:
             self.muscle_var.set(chosen)
+
+    def on_scan_drives(self) -> None:
+        """Search every drive for MUSCLE, in the background so the window stays
+        responsive. Progress and the result are streamed into the log."""
+        if getattr(self, "_scanning", False):
+            return
+        self._scanning = True
+        self.scan_button.configure(state="disabled", text="Searching ...")
+        self.write("Searching all drives for MUSCLE (this can take a moment) ...")
+
+        def work() -> None:
+            try:
+                found = driver.find_muscle(
+                    deep=True,
+                    announce=lambda where: self.messages.put(f"  searching {where}"))
+            except Exception as exc:  # noqa: BLE001
+                self.messages.put(f"  drive search failed: {exc}")
+                found = None
+            self.messages.put("__muscle__" + (str(found) if found else ""))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def finish_scan(self, path: str) -> None:
+        self._scanning = False
+        self.scan_button.configure(state="normal", text="Search drives")
+        if path:
+            self.muscle_var.set(path)
+            self.write(f"MUSCLE found: {path}")
+        else:
+            self.write("MUSCLE was not found on any drive. Use Browse to point at "
+                       "the file, or install it (see the README).")
 
     def build_command(self, check_only: bool) -> list[str]:
         command = [sys.executable, str(DRIVER)]
@@ -337,6 +379,8 @@ class AlignmentWindow:
                 item = self.messages.get_nowait()
                 if item.startswith("__done__"):
                     self.finish(int(item[len("__done__"):]))
+                elif item.startswith("__muscle__"):
+                    self.finish_scan(item[len("__muscle__"):])
                 else:
                     self.write(item)
         except queue.Empty:

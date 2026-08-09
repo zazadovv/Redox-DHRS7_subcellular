@@ -355,6 +355,62 @@ Python 3.10 + biopython / pandas / numpy / matplotlib / requests (via `phylo.yml
 **MUSCLE v5** (on `PATH` or via `MUSCLE_EXE`), and internet access to Ensembl,
 UniProt and AlphaFold. A Chromium/Edge/Chrome browser is optional (PNG
 rasterization only; the SVG is the primary deliverable).
+---
+
+## Using the MSA GUI
+
+The optional `MSA_GUI.py` interface provides an interactive workflow for building and exploring the DHRS7 multiple-sequence alignment. It retrieves orthologs, runs MUSCLE, adds AlphaFold secondary-structure information, and creates the alignment browser and annotated figure.
+
+### Launching the GUI
+
+Activate the environment and run:
+
+```bash
+conda activate phylo
+python MSA_GUI.py
+
+If your local environment has a different name, activate the environment containing the dependencies listed in phylo.yml.
+<img width="1170" height="980" alt="Screenshot 2026-08-09 172707" src="https://github.com/user-attachments/assets/4738f286-7d45-42c6-8484-1bb6c7d8a9de" />
+
+### Configuring the analysis
+
+In the **DHRS7 cross-species alignment** window:
+
+- Keep **Use the DHRS7 preset** enabled.
+- Use `DHRS7` as the gene.
+- The default comparison species are mouse, rat, cattle, and zebrafish.
+- Human is automatically added as the reference species.
+- Select the output folder, usually `DHRS7_Output`.
+- Select the MUSCLE v5 executable.
+- Set the residues per block to `70`.
+- Choose either **Torsion (phi/psi)** or **Torsion + H-bonding** for secondary-structure annotation.
+- Click **Check setup** before running.
+<img width="1100" height="946" alt="Screenshot 2026-08-09 172745" src="https://github.com/user-attachments/assets/128e97bf-0070-4afa-9cba-b356ac22f43f" />
+
+### Running the full build
+
+Click **Run** to start the analysis. The full build retrieves the DHRS7 orthologs, aligns the sequences with MUSCLE, retrieves AlphaFold models, maps secondary structure, and generates the alignment browser and annotated figure.
+
+Internet access to Ensembl, UniProt, and AlphaFold is required.
+
+The program warns that existing files in the output folder will be replaced. Select **OK** only after backing up any previous results that need to be retained.
+
+<img width="490" height="242" alt="Screenshot 2026-08-09 172806" src="https://github.com/user-attachments/assets/0078d5b4-275e-4236-875f-69a7b52f07db" />
+
+### Checking the results
+
+When the run is complete, the log reports the main output files. The GUI also provides buttons to:
+
+- **Open results folder**
+- **Open alignment browser**
+- **Open figure**
+
+<img width="1103" height="937" alt="Screenshot 2026-08-09 174012" src="https://github.com/user-attachments/assets/139a4ea1-3124-4331-9f24-59c5eeb23b09" />
+
+<img width="1792" height="1050" alt="Screenshot 2026-08-09 174102" src="https://github.com/user-attachments/assets/120beb9e-39d5-4103-b4aa-6fbbb422093f" />
+
+
+
 
 ## Citation
 

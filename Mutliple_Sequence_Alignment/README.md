@@ -15,7 +15,7 @@ The panel compares five species, drawn in this order:
 |-----|---------|--------|
 | 1 | mouse — *Mus musculus* | ENSMUSP00000021512 |
 | 2 | rat — *Rattus norvegicus* | ENSRNOP00000007645 |
-| 3 | cattle — *Bos taurus* | ENSBTAP00000086519 / UniProt Q24K14 |
+| 3 | cattle — *Bos taurus* | ENSBTAP00000086519  |
 | 4 | zebrafish — *Danio rerio* | ENSDARP00000004163 |
 | 5 | human — *Homo sapiens* (reference) | ENSP00000216500 |
 

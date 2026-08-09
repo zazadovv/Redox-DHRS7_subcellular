@@ -357,6 +357,8 @@ UniProt and AlphaFold. A Chromium/Edge/Chrome browser is optional (PNG
 rasterization only; the SVG is the primary deliverable).
 ---
 
+---
+
 ## Using the MSA GUI
 
 The optional `MSA_GUI.py` interface provides an interactive workflow for building and exploring the DHRS7 multiple-sequence alignment. It retrieves orthologs, runs MUSCLE, adds AlphaFold secondary-structure information, and creates the alignment browser and annotated figure.
@@ -368,9 +370,11 @@ Activate the environment and run:
 ```bash
 conda activate phylo
 python MSA_GUI.py
+```
 
-If your local environment has a different name, activate the environment containing the dependencies listed in phylo.yml.
-<img width="1170" height="980" alt="Screenshot 2026-08-09 172707" src="https://github.com/user-attachments/assets/4738f286-7d45-42c6-8484-1bb6c7d8a9de" />
+If your local environment has a different name, activate the environment containing the dependencies listed in `phylo.yml`.
+
+<!-- Insert the launch screenshot here. -->
 
 ### Configuring the analysis
 
@@ -385,7 +389,8 @@ In the **DHRS7 cross-species alignment** window:
 - Set the residues per block to `70`.
 - Choose either **Torsion (phi/psi)** or **Torsion + H-bonding** for secondary-structure annotation.
 - Click **Check setup** before running.
-<img width="1100" height="946" alt="Screenshot 2026-08-09 172745" src="https://github.com/user-attachments/assets/128e97bf-0070-4afa-9cba-b356ac22f43f" />
+
+<!-- Insert the settings screenshot here. -->
 
 ### Running the full build
 
@@ -395,7 +400,9 @@ Internet access to Ensembl, UniProt, and AlphaFold is required.
 
 The program warns that existing files in the output folder will be replaced. Select **OK** only after backing up any previous results that need to be retained.
 
-<img width="490" height="242" alt="Screenshot 2026-08-09 172806" src="https://github.com/user-attachments/assets/0078d5b4-275e-4236-875f-69a7b52f07db" />
+<!-- Insert the overwrite-confirmation screenshot here. -->
+
+For an existing build, select **Redraw the figure only, reusing an existing build (no network)** to regenerate the figure without repeating the online retrieval and alignment steps.
 
 ### Checking the results
 
@@ -405,10 +412,34 @@ When the run is complete, the log reports the main output files. The GUI also pr
 - **Open alignment browser**
 - **Open figure**
 
-<img width="1103" height="937" alt="Screenshot 2026-08-09 174012" src="https://github.com/user-attachments/assets/139a4ea1-3124-4331-9f24-59c5eeb23b09" />
+The principal outputs are:
 
-<img width="1792" height="1050" alt="Screenshot 2026-08-09 174102" src="https://github.com/user-attachments/assets/120beb9e-39d5-4103-b4aa-6fbbb422093f" />
+```text
+DHRS7_Output/plots/dhrs7_species_snapshot.svg
+DHRS7_Output/alignment_browser.html
+DHRS7_Output/METHODS_DHRS7.md
+```
 
+<!-- Insert the completed-run screenshot here. -->
+
+### Exploring the alignment browser
+
+Open `DHRS7_Output/alignment_browser.html` in a web browser to inspect the alignment interactively. The browser allows you to:
+
+- Search for and add additional species.
+- Remove species from the display.
+- Change the secondary-structure display.
+- Highlight residues shared by human and zebrafish but different in the rodents.
+- Identify the subset where cattle also shares the residue.
+- Display the raw alignment.
+- Adjust the number of residues shown per line.
+- Export the current view as SVG or PNG.
+
+Human remains the reference species, and the displayed species can be arranged before exporting the figure.
+
+<!-- Insert the alignment-browser screenshot here. -->
+
+---
 
 
 

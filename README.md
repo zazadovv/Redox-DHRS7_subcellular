@@ -390,7 +390,8 @@ In the **DHRS7 cross-species alignment** window:
 - Choose either **Torsion (phi/psi)** or **Torsion + H-bonding** for secondary-structure annotation.
 - Click **Check setup** before running.
 
-<!-- Insert the settings screenshot here. -->
+<img width="1100" height="946" alt="Screenshot 2026-08-09 172745" src="https://github.com/user-attachments/assets/86f4a340-31fb-4522-827b-721c36294b43" />
+
 
 ### Running the full build
 
@@ -400,7 +401,8 @@ Internet access to Ensembl, UniProt, and AlphaFold is required.
 
 The program warns that existing files in the output folder will be replaced. Select **OK** only after backing up any previous results that need to be retained.
 
-<!-- Insert the overwrite-confirmation screenshot here. -->
+<img width="490" height="242" alt="Screenshot 2026-08-09 172806" src="https://github.com/user-attachments/assets/fc302483-5a7a-4b62-a143-4b5002193360" />
+
 
 For an existing build, select **Redraw the figure only, reusing an existing build (no network)** to regenerate the figure without repeating the online retrieval and alignment steps.
 
@@ -420,7 +422,8 @@ DHRS7_Output/alignment_browser.html
 DHRS7_Output/METHODS_DHRS7.md
 ```
 
-<!-- Insert the completed-run screenshot here. -->
+<img width="1103" height="937" alt="Screenshot 2026-08-09 174012" src="https://github.com/user-attachments/assets/9961dede-1fa1-4601-a09e-cc84a49d778a" />
+
 
 ### Exploring the alignment browser
 
@@ -437,7 +440,8 @@ Open `DHRS7_Output/alignment_browser.html` in a web browser to inspect the align
 
 Human remains the reference species, and the displayed species can be arranged before exporting the figure.
 
-<!-- Insert the alignment-browser screenshot here. -->
+<img width="1792" height="1050" alt="Screenshot 2026-08-09 174102" src="https://github.com/user-attachments/assets/c799492b-5f28-4b35-974b-59d937504fcf" />
+
 
 ---
 

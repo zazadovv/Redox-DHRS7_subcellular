@@ -1,0 +1,35 @@
+# ============================================================================
+# phylo_genes_env.yml
+# Conda environment for the DHRS7 orthologue / phylogeny–conservation pipeline
+# Repo: https://github.com/zazadovv/Redox-DHRS7_subcellular
+#       (scripts in Mutliple_Sequence_Alignment/)
+#
+# VERIFIED-WORKING snapshot as of 2026-08-10 on Windows 11 (build 26200).
+# Confirmed: all module imports succeed, and Bio.Align PairwiseAligner with
+# BLOSUM62 (global/Needleman-Wunsch; gap-open -10, gap-extend -0.5) runs.
+#
+# Create:   conda env create -f phylo_genes_env.yml
+# Activate: conda activate phylo_genes
+# Exact lock (all pins): requirements-lock_phylo_genes.txt
+#
+# EXTERNAL tools — NOT installable from this file; install separately:
+#   * MUSCLE v5.3 (build d9725ac) — standalone aligner. Must be on PATH; the
+#     pipeline invokes it via subprocess.  https://drive5.com/muscle5/
+#   * UCSF ChimeraX — ONLY needed for
+#     DHRS7_AF_Mouse_Rat_Bovin_Fish_Human_Secondary_Structure_alignment.py,
+#     which runs inside ChimeraX's own bundled Python, not this environment.
+# ============================================================================
+name: phylo_genes
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.10.20
+  - pip
+  - pip:
+      - biopython==1.87       # sequence I/O, PairwiseAligner (NW/BLOSUM62), Phylo
+      - numpy==2.2.6          # numerical ops, phi/psi secondary-structure assignment
+      - pandas==2.3.3         # tabular handling / identity tables
+      - matplotlib==3.10.8    # figure panels
+      - requests==2.33.1      # Ensembl REST orthologue retrieval
